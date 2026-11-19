@@ -18,7 +18,12 @@ BR2_GLOBAL_PATCH_DIR="board/raspberrypi/patches"
 BR2_TOOLCHAIN_BUILDROOT=y
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
-BR2_KERNEL_HEADERS_6_12=y
+# En-têtes tirés du noyau Raspberry Pi lui-même : ils correspondent
+# exactement au noyau qui tourne, et leur hash est déjà fourni par
+# BR2_GLOBAL_PATCH_DIR (qui remplace le .hash de linux-headers : une version
+# kernel.org comme 6.12.91 y serait refusée avec "No hash found").
+BR2_KERNEL_HEADERS_AS_KERNEL=y
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y
 
 # --- Système ---
 BR2_TARGET_GENERIC_HOSTNAME="airplay"
