@@ -181,6 +181,94 @@ start otherwise).
 The hostname is derived from `NAME` (`Living Room` → `living-room.local`);
 set `HOSTNAME=` explicitly if the name contains accented characters.
 
+## `airplay.conf` reference
+
+`airplay.conf` sits at the root of the boot partition. `S01bootconf` reads it
+at every boot: changes take effect on the next reboot.
+
+**Syntax.** The file uses shell syntax: one `KEY="value"` per line, with no
+spaces around `=`. Lines starting with `#` are comments. Windows/Mac line
+endings (CRLF) are handled. Because the file is evaluated as a shell script,
+use single quotes for values containing `$`, `` ` `` or `\`
+(`NAME='Bob$ room'`), and escape double quotes inside double quotes
+(`NAME="The \"Den\""`). If the file has a syntax error, it is ignored as a
+whole and every setting falls back to its default (the message appears on the
+HDMI console). A missing key also takes its default.
+
+### Identity
+
+| Key | Default | Description |
+|---|---|---|
+| `NAME` | `AirPlay` | Speaker name shown in AirPlay on the iPhone or Mac. Any text, accents and spaces included. |
+| `HOSTNAME` | derived from `NAME` | Network name: `http://<HOSTNAME>.local`, `ssh root@<HOSTNAME>.local`, and the name sent to the DHCP server. |
+
+`HOSTNAME` is always normalized: lowercased, every character other than
+`a-z`, `0-9` and `-` becomes `-`, repeated dashes are merged, leading and
+trailing dashes are removed, and the result is cut to 63 characters. If
+nothing is left, `airplay` is used. Examples: `Living Room` → `living-room`,
+`Séjour` → `s-jour` (hence setting `HOSTNAME` explicitly when the name has
+accented characters). Give each speaker a distinct hostname.
+
+### Wi-Fi
+
+| Key | Default | Description |
+|---|---|---|
+| `WIFI_SSID` | empty | Network name. Empty: Wi-Fi is not started (Ethernet only). Any character is allowed, and hidden networks work. |
+| `WIFI_PSK` | empty | Wi-Fi password: a passphrase of 8 to 63 characters, or the raw 64-hex-digit key. Empty: open network (no password). |
+| `WIFI_COUNTRY` | `FR` | Two-letter ISO 3166 country code (`FR`, `DE`, `GB`, `US`...). Sets the allowed channels and transmit power; a wrong or missing country can hide 5 GHz networks. |
+
+- WPA2-Personal (and WPA2/WPA3 transition mode) networks are supported;
+  WPA3-only (SAE) and enterprise (802.1X) networks are not.
+- An invalid `WIFI_PSK` (too short or too long) leaves Wi-Fi off and logs
+  `invalid WIFI_PSK` on the console.
+- The password is turned into a hashed key in `/run/wpa_supplicant.conf`
+  (readable by root only) and is never shown by the web interface. It is
+  still stored in clear text in `airplay.conf`, on a FAT partition anyone
+  holding the SD card can read.
+- Ethernet needs no setting: if a cable is plugged in, `eth0` gets an address
+  by DHCP, alongside Wi-Fi if both are present.
+
+### Audio
+
+| Key | Default | Description |
+|---|---|---|
+| `OUTPUT_DEVICE` | `hw:0` | ALSA output device. `hw:0` is the first sound card; `hw:CARD=<id>` targets a card by name (the id is the word before the brackets in `aplay -l`). Prefer `hw:` over `plughw:`: shairport-sync then drives the card directly, which keeps multiroom sync accurate. |
+| `MIXER` | `Digital` | ALSA mixer control used for the volume (list them with `amixer scontrols`). The iPhone volume then drives the hardware volume. Empty (`MIXER=""`): software volume, required for cards with no volume control such as PCM5102A boards. |
+| `AUDIO_MODE` | `stereo` | Channel mix: `stereo`, `mono`, `left`, `right` or `reverse` (see [Single-speaker players](#single-speaker-players)). Case-insensitive; an unknown value falls back to `stereo`. |
+| `INTERPOLATION` | `basic` | How shairport-sync stays in sync by adding or dropping audio frames: `basic` (lightest, recommended on the Pi 2 B) or `auto`. Any other value falls back to `basic`. `soxr` is not available: shairport-sync is built without it. |
+| `AMIXER_CMDS` | empty | Extra `amixer` commands, separated by `;`, applied each time shairport-sync starts (ALSA settings are not persistent on a read-only system). Each command is the list of `amixer` arguments, quotes allowed. |
+
+See [Audio HATs](#audio-hats) for the `MIXER` value of each HAT. Examples of
+`AMIXER_CMDS`:
+
+```
+# DigiAMP+ or HiFiBerry DAC+: analog gain at 0 dB, boost off
+AMIXER_CMDS="-c 0 sset Analogue 0dB;-c 0 sset 'Analogue Playback Boost' 0dB"
+```
+
+A failing command is logged (`amixer ...: failed`) and does not prevent
+shairport-sync from starting.
+
+### Example
+
+```
+NAME="Kitchen"
+HOSTNAME="kitchen"
+
+WIFI_SSID="Home"
+WIFI_PSK="correct horse battery staple"
+WIFI_COUNTRY="FR"
+
+OUTPUT_DEVICE="hw:CARD=sndrpihifiberry"
+MIXER="Digital"
+AUDIO_MODE="mono"
+INTERPOLATION="basic"
+AMIXER_CMDS=""
+```
+
+The values actually applied can be checked in `/run/airplay.env` or in the
+Configuration card of the web interface.
+
 ## Diagnostics
 
 ```bash
