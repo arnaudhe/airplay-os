@@ -1,88 +1,88 @@
 # airplay-os
 
-Distribution Linux minimale (Buildroot) qui transforme des Raspberry Pi en
-récepteurs **AirPlay 2** regroupables en multiroom depuis un iPhone ou un Mac.
+Minimal Linux distribution (Buildroot) that turns Raspberry Pis into
+**AirPlay 2** receivers that can be grouped for multiroom playback from an
+iPhone or a Mac.
 
-- Racine **squashfs en lecture seule**, `/boot` monté `ro` : aucune écriture
-  sur la carte SD en fonctionnement, tolérance aux coupures de courant.
-- **Image unique** 32 bits ARMv7 pour Raspberry Pi 2 B et Pi 3 A+.
-- Configuration propre à chaque enceinte dans `airplay.conf` sur la partition
-  boot.
+- **Read-only squashfs root**, `/boot` mounted `ro`: nothing is written to
+  the SD card at runtime, and power cuts are harmless.
+- **Single** 32-bit ARMv7 image for Raspberry Pi 2 B and Pi 3 A+.
+- Per-speaker settings in `airplay.conf` on the boot partition.
 
-Base : **Buildroot 2026.02.3** (LTS), shairport-sync 4.3.7 (AirPlay 2) et
-nqptp 1.2.4 fournis par Buildroot, noyau Raspberry Pi 6.12.
+Based on **Buildroot 2026.02.3** (LTS), with shairport-sync 4.3.7 (AirPlay 2)
+and nqptp 1.2.4 from Buildroot, and the Raspberry Pi 6.12 kernel.
 
-## Arborescence
+## Layout
 
 ```
-Dockerfile                  environnement de build (Debian bookworm, arm64 natif)
-scripts/build.sh            build dans Docker + récupération de sdcard.img
-docs/                       captures d'écran
-br2-airplay/                arbre BR2_EXTERNAL
+Dockerfile                  build environment (Debian bookworm, native arm64)
+scripts/build.sh            build in Docker + fetch sdcard.img
+docs/                       screenshots
+br2-airplay/                BR2_EXTERNAL tree
 ├── configs/airplay_rpi_armv7_defconfig
 ├── board/airplay/
-│   ├── config.txt          firmware : overlay du HAT, pas de arm_64bit
+│   ├── config.txt          firmware: HAT overlay, no arm_64bit
 │   ├── cmdline.txt         root=/dev/mmcblk0p2 rootfstype=squashfs ro
-│   ├── airplay.conf        modèle de configuration par appareil
-│   ├── linux.fragment      CONFIG_SQUASHFS=y (module par défaut)
-│   ├── genimage.cfg        boot FAT (64 Mo) + rootfs.squashfs
-│   ├── post-build.sh       liens /etc -> /run, /var/log en tmpfs
+│   ├── airplay.conf        per-device configuration template
+│   ├── linux.fragment      CONFIG_SQUASHFS=y (a module by default)
+│   ├── genimage.cfg        FAT boot (64 MB) + rootfs.squashfs
+│   ├── post-build.sh       /etc -> /run symlinks, /var/log on tmpfs
 │   ├── post-image.sh       airplay.conf + genimage
 │   └── rootfs_overlay/
 │       ├── etc/fstab
 │       ├── etc/shairport-sync.conf.tpl
 │       ├── etc/init.d/S01bootconf S40network
 │       └── usr/libexec/airplay/run-nqptp run-shairport respawn-guard
-├── package/airplay-web/    paquet Buildroot de l'interface web
-└── src/airplay-web/        sources Rust de l'interface web
+├── package/airplay-web/    Buildroot package of the web interface
+└── src/airplay-web/        Rust sources of the web interface
 ```
 
-## Construire l'image (macOS + Docker)
+## Building the image (macOS + Docker)
 
-Prérequis Docker Desktop : 8 Go de RAM, tous les cœurs, ~40 Go de disque.
-Sur Apple Silicon, l'image `debian:bookworm` est tirée en arm64 natif.
+Docker Desktop requirements: 8 GB of RAM, all cores, ~40 GB of disk.
+On Apple Silicon, the `debian:bookworm` image is pulled as native arm64.
 
 ```bash
 ./scripts/build.sh
 ```
 
-Le script crée l'image `buildroot-env` et le volume `br-work`, clone Buildroot
-2026.02.3 dans le volume, applique `airplay_rpi_armv7_defconfig`, compile et
-copie `sdcard.img` à la racine du dépôt. Le premier build (toolchain interne,
-noyau, ffmpeg) prend plusieurs heures. ccache est activé (cache dans le volume).
+The script creates the `buildroot-env` image and the `br-work` volume, clones
+Buildroot 2026.02.3 into the volume, applies `airplay_rpi_armv7_defconfig`,
+builds, and copies `sdcard.img` to the repository root. The first build
+(internal toolchain, kernel, ffmpeg) takes several hours. ccache is enabled
+(cache stored in the volume).
 
-Autres usages :
+Other uses:
 
 ```bash
-./scripts/build.sh shell                  # shell dans /work/buildroot
+./scripts/build.sh shell                  # shell in /work/buildroot
 ```
 
 ```bash
-./scripts/build.sh menuconfig             # puis : ./scripts/build.sh savedefconfig
+./scripts/build.sh menuconfig             # then: ./scripts/build.sh savedefconfig
 ```
 
 ```bash
 ./scripts/build.sh shairport-sync-rebuild all
 ```
 
-Après une modification du defconfig, réappliquer la configuration avec
-`./scripts/build.sh defconfig`. Les commandes manuelles équivalentes sont dans
-la section 8 des spécifications.
+After changing the defconfig, reapply it with `./scripts/build.sh defconfig`.
+The equivalent manual commands are in section 8 of the specification.
 
-## Construire l'image sur Linux (sans Docker)
+## Building the image on Linux (without Docker)
 
-Sur une machine Linux x86_64 ou arm64, Buildroot se lance directement. Prévoir
-~40 Go de disque libre et un utilisateur **non-root**.
+On an x86_64 or arm64 Linux machine, Buildroot runs directly. Plan for
+~40 GB of free disk space and a **non-root** user.
 
-### Dépendances
+### Dependencies
 
-Debian / Ubuntu :
+Debian / Ubuntu:
 
 ```bash
 sudo apt-get install -y build-essential gcc g++ make patch perl python3 file wget ca-certificates cpio unzip rsync bc git libncurses-dev bzip2 xz-utils gzip diffutils findutils sed bash
 ```
 
-Fedora :
+Fedora:
 
 ```bash
 sudo dnf install -y gcc gcc-c++ make patch perl python3 file wget which cpio unzip rsync bc git ncurses-devel bzip2 xz gzip diffutils findutils sed bash perl-FindBin perl-IPC-Cmd perl-English perl-Thread-Queue
@@ -90,7 +90,7 @@ sudo dnf install -y gcc gcc-c++ make patch perl python3 file wget which cpio unz
 
 ### Build
 
-Depuis la racine de ce dépôt, Buildroot étant cloné à côté :
+From the root of this repository, with Buildroot cloned next to it:
 
 ```bash
 git clone https://gitlab.com/buildroot.org/buildroot.git ../buildroot
@@ -108,110 +108,137 @@ make -C ../buildroot BR2_EXTERNAL="$PWD/br2-airplay" airplay_rpi_armv7_defconfig
 make -C ../buildroot -j"$(nproc)"
 ```
 
-L'image est produite dans `../buildroot/output/images/sdcard.img`.
-`BR2_EXTERNAL` est mémorisé dans `output/` : les `make` suivants (par exemple
-`make -C ../buildroot menuconfig`, puis `savedefconfig` pour réécrire le
-defconfig du dépôt) n'en ont plus besoin. Le cache ccache est placé à côté
-de Buildroot, dans `../.buildroot-ccache`, et les sources téléchargées dans
+The image is written to `../buildroot/output/images/sdcard.img`.
+`BR2_EXTERNAL` is remembered in `output/`: later `make` calls (for instance
+`make -C ../buildroot menuconfig`, then `savedefconfig` to rewrite the
+repository's defconfig) no longer need it. The ccache cache lives next to
+Buildroot, in `../.buildroot-ccache`, and downloaded sources in
 `../buildroot/dl/`.
 
-Remarques :
-- la variable `PATH` ne doit contenir ni espace ni répertoire relatif (`.`) ;
-  Buildroot refuse de démarrer sinon ;
-- la variable `LD_LIBRARY_PATH` doit être vide (`unset LD_LIBRARY_PATH`) ;
-- ne pas lancer le build en root.
+Notes:
+- `PATH` must not contain spaces or relative directories (`.`); Buildroot
+  refuses to start otherwise;
+- `LD_LIBRARY_PATH` must be empty (`unset LD_LIBRARY_PATH`);
+- do not build as root.
 
-### Flasher depuis Linux
+When a package's options change in the defconfig (as with `BR2_PACKAGE_XZ`
+for kmod or `BR2_PACKAGE_WPA_SUPPLICANT_DEBUG_SYSLOG`), Buildroot does not
+rebuild it on its own: run `make <package>-dirclean all`. Likewise, Buildroot
+never removes files from `output/target`; only `make clean all` guarantees an
+exact rootfs after removing a package or a file.
 
-Identifier la carte SD avec `lsblk` (ici `/dev/sdX`, à adapter : **toutes les
-données du périphérique sont effacées**) :
+### Flashing from Linux
+
+Find the SD card with `lsblk` (here `/dev/sdX`, adjust it: **all data on the
+device is erased**):
 
 ```bash
 sudo dd if=../buildroot/output/images/sdcard.img of=/dev/sdX bs=4M conv=fsync status=progress
 ```
 
-## Flasher et configurer une enceinte
+## Flashing and configuring a speaker
 
-1. Flasher `sdcard.img` (balenaEtcher, ou `dd` vers `/dev/rdiskN`).
-2. Sur la partition **BOOT** :
-   - `config.txt` : garder **une seule** ligne `dtoverlay=` correspondant au HAT
-     (par défaut `iqaudio-dacplus,unmute_amp` pour le DigiAMP+) ;
-   - `airplay.conf` : `NAME`, Wi-Fi (`WIFI_SSID`, `WIFI_PSK`, `WIFI_COUNTRY`),
-     `OUTPUT_DEVICE`, `MIXER`, `AUDIO_MODE` ;
-   - facultatif : `authorized_keys` (clés publiques SSH pour `root`).
-3. Éjecter proprement la carte (seul moment où la partition boot est écrite).
+1. Flash `sdcard.img` (balenaEtcher, or `dd` to `/dev/rdiskN`).
+2. On the **BOOT** partition:
+   - `config.txt`: keep **only one** `dtoverlay=` line, matching the HAT
+     (`iqaudio-dacplus,unmute_amp` for the DigiAMP+ by default);
+   - `airplay.conf`: `NAME`, Wi-Fi (`WIFI_SSID`, `WIFI_PSK`, `WIFI_COUNTRY`),
+     `OUTPUT_DEVICE`, `MIXER`, `AUDIO_MODE`;
+   - optional: `authorized_keys` (SSH public keys for `root`) and
+     `dropbear_ed25519_host_key` (fixed SSH host key, see below).
+3. Eject the card cleanly (the only time the boot partition is written).
 
-### Enceinte à un seul haut-parleur
+### Audio HATs
 
-`AUDIO_MODE` dans `airplay.conf` choisit le mixage des canaux, appliqué par
-shairport-sync (`playback_mode`) avant le volume matériel :
-
-| `AUDIO_MODE` | Sortie gauche | Sortie droite | Usage |
+| HAT | Chip | `dtoverlay` | `MIXER` |
 |---|---|---|---|
-| `stereo` (défaut) | G | D | deux haut-parleurs |
-| `mono` | (G+D)/2 | (G+D)/2 | un seul HP, branché d'un côté ou de l'autre |
-| `left` | G | G | ne diffuser que le canal gauche |
-| `right` | D | D | ne diffuser que le canal droit |
-| `reverse` | D | G | haut-parleurs câblés à l'envers |
+| IQaudio DigiAMP+ | PCM5122 | `iqaudio-dacplus,unmute_amp` | `"Digital"` |
+| HiFiBerry DAC+ ADC | PCM5122 | `hifiberry-dacplusadc` | `"Digital"` |
+| HiFiBerry DAC+ ADC Pro | PCM5122 | `hifiberry-dacplusadcpro` | `"Digital"` |
+| HiFiBerry DAC+ Standard | PCM5122 | `hifiberry-dacplus-std` | `"Digital"` |
+| HiFiBerry DAC / DAC+ Light, Pimoroni pHAT DAC | PCM5102A | `hifiberry-dac` | `""` (no hardware volume) |
 
-Une valeur inconnue retombe sur `stereo` (shairport-sync refuserait sinon de
-démarrer).
+For HiFiBerry cards and the pHAT DAC, `OUTPUT_DEVICE="hw:CARD=sndrpihifiberry"`
+keeps working even if another sound card shows up; check the name with
+`aplay -l`. With `MIXER=""`, shairport-sync adjusts the volume in software.
 
-Le hostname est déduit de `NAME` (`Salon` → `salon.local`) ; le définir avec
-`HOSTNAME=` si le nom contient des accents.
+### Single-speaker players
 
-## Diagnostic
+`AUDIO_MODE` in `airplay.conf` selects the channel mix, applied by
+shairport-sync (`playback_mode`) before the hardware volume:
+
+| `AUDIO_MODE` | Left output | Right output | Use |
+|---|---|---|---|
+| `stereo` (default) | L | R | two speakers |
+| `mono` | (L+R)/2 | (L+R)/2 | single driver, wired to either side |
+| `left` | L | L | play the left channel only |
+| `right` | R | R | play the right channel only |
+| `reverse` | R | L | speakers wired the wrong way round |
+
+An unknown value falls back to `stereo` (shairport-sync would refuse to
+start otherwise).
+
+The hostname is derived from `NAME` (`Living Room` → `living-room.local`);
+set `HOSTNAME=` explicitly if the name contains accented characters.
+
+## Diagnostics
 
 ```bash
-ssh root@salon.local
+ssh root@living-room.local
 ```
 
-- Connexion par clé uniquement (`/boot/authorized_keys`). La console HDMI
-  `tty1` accepte `root` sans mot de passe.
-- Les clés d'hôte SSH sont régénérées à chaque démarrage. Pour une empreinte
-  fixe, copier `/run/dropbear/dropbear_ed25519_host_key` (généré au premier
-  boot) à la racine de la partition boot.
-- Logs : `/var/log/messages` (tmpfs, perdu au redémarrage).
-- Configs générées : `/run/airplay.env`, `/run/shairport-sync.conf`,
+- Key-based login only (`/boot/authorized_keys`, one key per line). The HDMI
+  console on `tty1` accepts `root` without a password.
+- SSH host keys are regenerated at every boot. For a fixed fingerprint, fetch
+  the key generated after the first boot and first connection:
+
+  ```bash
+  ssh root@living-room.local cat /run/dropbear/dropbear_ed25519_host_key > dropbear_ed25519_host_key
+  ```
+
+  then copy that file to the root of the speaker's boot partition (one key
+  per speaker, never shared).
+- Logs: `/var/log/messages` (tmpfs, lost on reboot).
+- Generated configs: `/run/airplay.env`, `/run/shairport-sync.conf`,
   `/run/wpa_supplicant.conf`.
-- Relancer shairport-sync (après avoir modifié `/run/shairport-sync.conf` pour
-  un essai, par exemple) : `killall shairport-sync` ; init le redémarre.
+- Restart shairport-sync (after editing `/run/shairport-sync.conf` for a
+  test, for example): `killall shairport-sync`; init restarts it.
 
-## Interface web (lecture seule)
+## Web interface (read-only)
 
-Chaque enceinte affiche son état sur **`http://<hostname>.local`** (par
-exemple `http://salon.local`). Le service est annoncé en mDNS (`_http._tcp`)
-et la page se met à jour toutes les 3 s. Elle fonctionne en thème clair ou
-sombre et s'adapte au téléphone.
+Each speaker shows its status at **`http://<hostname>.local`** (for example
+`http://living-room.local`). The service is announced over mDNS
+(`_http._tcp`) and the page refreshes every 3 s. It has light and dark
+themes and adapts to phones.
 
-![Interface web](docs/airplay-web.png)
+![Web interface](docs/airplay-web.png)
 
-- **Audio** : volume du mixer matériel, carte son, mixage (`AUDIO_MODE`), flux
-  en cours (fréquence, format), indicateur « En lecture ».
-- **Réseau** : IP, et pour le Wi-Fi le SSID, le signal, la bande et le canal
-  ainsi que le débit.
-- **Système** : uptime, charge, fréquence CPU, température, mémoire, alarme de
-  **sous-tension** (pilote `raspberrypi-hwmon`).
-- **Services** : processus attendus et depuis quand ils tournent (une relance
-  récente se voit immédiatement).
-- **Stockage** : `/` et `/boot` en lecture seule, nombre d'écritures sur la
-  carte SD depuis le démarrage (critère de validation de la section 10).
-- **Configuration** : valeurs de `/run/airplay.env` et lignes actives de
-  `config.txt`.
-- **Journal** : fin de `/var/log/messages`.
+- **Audio**: hardware mixer volume, sound card, channel mix (`AUDIO_MODE`),
+  current stream (rate, format), "Playing" indicator.
+- **Network**: IP, and for Wi-Fi the SSID, signal, band and channel, and
+  bitrate.
+- **System**: uptime, load, CPU frequency, temperature, memory,
+  **undervoltage** alarm (`raspberrypi-hwmon` driver).
+- **Services**: expected processes and how long they have been running (a
+  recent restart is visible at a glance).
+- **Storage**: `/` and `/boot` read-only, number of writes to the SD card
+  since boot (validation criterion from section 10).
+- **Configuration**: values from `/run/airplay.env` and active `config.txt`
+  lines.
+- **Log**: tail of `/var/log/messages`.
 
-Rien n'est jamais écrit (seules les requêtes `GET`/`HEAD` sont acceptées) et le
-mot de passe Wi-Fi n'est pas exposé. Il n'y a pas d'authentification : la page
-est visible par tout le réseau local.
+Nothing is ever written (only `GET`/`HEAD` requests are accepted) and the
+Wi-Fi password is not exposed. There is no authentication: the page is
+visible to the whole local network.
 
-Le serveur (`src/airplay-web`) est écrit en Rust **sans aucune dépendance
-externe** : le paquet se compile hors ligne avec le Rust précompilé de
-Buildroot, et le binaire fait environ 500 Ko. HTML, CSS et JS sont intégrés au
-binaire, sans police ni ressource externe. Il est lancé et supervisé par init
-comme nqptp et shairport-sync. Pour le retirer de l'image :
+The server (`src/airplay-web`) is written in Rust **with no external
+dependencies**: the package builds offline with Buildroot's prebuilt Rust,
+and the binary is about 500 KB. HTML, CSS and JS are embedded in the binary,
+with no external font or asset. It is started and supervised by init like
+nqptp and shairport-sync. To remove it from the image:
 `# BR2_PACKAGE_AIRPLAY_WEB is not set`.
 
-Développement sur un poste Linux, sans Pi :
+Development on a Linux machine, without a Pi:
 
 ```bash
 cd br2-airplay/src/airplay-web && cargo test
@@ -221,83 +248,85 @@ cd br2-airplay/src/airplay-web && cargo test
 AIRPLAY_WEB_LISTEN=127.0.0.1:8080 cargo run
 ```
 
-`AIRPLAY_WEB_ROOT=/chemin/vers/un/faux/arbre` permet de lire `/proc`, `/sys`,
-`/run` et `/boot` depuis un autre dossier, pour simuler une enceinte.
+`AIRPLAY_WEB_ROOT=/path/to/a/fake/tree` reads `/proc`, `/sys`, `/run` and
+`/boot` from another directory, to simulate a speaker.
 
-## Séquence de démarrage
+## Boot sequence
 
-| Script | Rôle |
+| Script | Role |
 |---|---|
-| `S01bootconf` | lit `/boot/airplay.conf`, règle le hostname, génère les configs dans `/run`, copie les clés SSH |
-| `S10udevd` | eudev : charge les modules du HAT et du Wi-Fi |
+| `S01bootconf` | reads `/boot/airplay.conf`, sets the hostname, generates the configs in `/run`, copies the SSH keys |
+| `S10udevd` | eudev: loads the HAT and Wi-Fi modules |
 | `S30dbus` | |
-| `S40network` | eth0 en DHCP ; wlan0 via wpa_supplicant + DHCP, `power_save off` |
-| `S50avahi-daemon` | annonce mDNS |
+| `S40network` | eth0 via DHCP; wlan0 via wpa_supplicant + DHCP, `power_save off` |
+| `S50avahi-daemon` | mDNS announcement |
 | `S50dropbear` | SSH |
 
-Une fois `rcS` terminé, BusyBox init lance les services supervisés déclarés
-dans `/etc/inittab` (action `respawn`, ajoutée par `post-build.sh`) et les
-relance s'ils s'arrêtent :
+Once `rcS` is done, BusyBox init starts the supervised services declared in
+`/etc/inittab` (`respawn` action, added by `post-build.sh`) and restarts them
+if they exit:
 
-| Service | Script | Rôle |
+| Service | Script | Role |
 |---|---|---|
-| nqptp | `run-nqptp` | horloge PTP (UDP 319/320, root) |
-| shairport-sync | `run-shairport` | attend la carte son, applique `AMIXER_CMDS`, lance shairport-sync au premier plan |
-| airplay-web | `run-airplay-web` | interface web en lecture seule, port 80 |
+| nqptp | `run-nqptp` | PTP clock (UDP 319/320, root) |
+| shairport-sync | `run-shairport` | waits for the sound card, applies `AMIXER_CMDS`, runs shairport-sync in the foreground |
+| airplay-web | `run-airplay-web` | read-only web interface, port 80 |
 
-Pour ne pas boucler sur un service qui plante dès son lancement,
-`respawn-guard` attend avant chaque relance : 2 s, puis 4, 8… jusqu'à 60 s. Le
-délai revient à 2 s quand le service a tenu plus de 5 minutes. Les relances
-sont tracées dans `/var/log/messages`.
+To avoid spinning on a service that crashes at startup, `respawn-guard` waits
+before each restart: 2 s, then 4, 8... up to 60 s. The delay goes back to 2 s
+once the service has stayed up for more than 5 minutes. Restarts are logged
+in `/var/log/messages`.
 
-## Écarts et précisions par rapport aux spécifications
+## Deviations from and clarifications of the specification
 
-- **Réglages `amixer`** : appliqués par `run-shairport` et non par
-  `S01bootconf`, car la carte son n'existe qu'une fois les modules chargés par
-  udev (S10).
-- **Réseau** : script `S40network` dédié, qui remplace ifupdown (une seule
-  image doit gérer Ethernet seul, Wi-Fi seul, ou les deux).
-- **fstab** : en plus des lignes prévues, `proc`, `sysfs`, `devpts` et
-  `/dev/shm` (mémoire partagée indispensable entre nqptp et shairport-sync).
-  `/var/log`, qui est un lien vers `/tmp` dans le squelette Buildroot, devient
-  un vrai répertoire pour y monter son tmpfs.
-- **Supervision** : nqptp et shairport-sync ne sont pas lancés par des
-  scripts `S49nqptp`/`S50shairport` mais par init (`inittab`, `respawn`), qui
-  les relance en cas d'arrêt. `S90nqptp` et `S99shairport-sync` installés par
-  Buildroot sont supprimés au post-build.
-- **Interface web** : la section 2 l'excluait. Celle-ci est en lecture seule et
-  peut être retirée de l'image d'une ligne dans le defconfig.
-- **Bluetooth** coupé sur Pi 3 (`dtoverlay=disable-bt`) : il partage l'antenne
-  du CYW43455.
-- `config.txt` et `cmdline.txt` sont installés par le paquet `rpi-firmware`
-  (`BR2_PACKAGE_RPI_FIRMWARE_{CONFIG,CMDLINE}_FILE`) ; `post-image.sh` ajoute
-  `airplay.conf` et appelle genimage. Le noyau est copié en `kernel7.img`.
+- **`amixer` settings**: applied by `run-shairport` rather than
+  `S01bootconf`, since the sound card only exists once udev (S10) has loaded
+  the modules.
+- **Network**: a dedicated `S40network` script replaces ifupdown (a single
+  image must handle Ethernet only, Wi-Fi only, or both).
+- **fstab**: besides the planned lines, `proc`, `sysfs`, `devpts` and
+  `/dev/shm` (shared memory required between nqptp and shairport-sync).
+  `/var/log`, a symlink to `/tmp` in the Buildroot skeleton, becomes a real
+  directory so its tmpfs can be mounted.
+- **Supervision**: nqptp and shairport-sync are not started by
+  `S49nqptp`/`S50shairport` scripts but by init (`inittab`, `respawn`), which
+  restarts them if they exit. The `S90nqptp` and `S99shairport-sync` scripts
+  installed by Buildroot are removed in post-build.
+- **Web interface**: section 2 excluded it. This one is read-only and can be
+  dropped from the image with one defconfig line.
+- **Bluetooth** disabled on the Pi 3 (`dtoverlay=disable-bt`): it shares the
+  CYW43455 antenna.
+- `config.txt` and `cmdline.txt` are installed by the `rpi-firmware` package
+  (`BR2_PACKAGE_RPI_FIRMWARE_{CONFIG,CMDLINE}_FILE`); `post-image.sh` adds
+  `airplay.conf` and runs genimage. The kernel is copied as `kernel7.img`.
 
-## Points vérifiés (Buildroot 2026.02.3)
+## Verified points (Buildroot 2026.02.3)
 
-- Option AirPlay 2 : `BR2_PACKAGE_SHAIRPORT_SYNC_AIRPLAY2` (sélectionne
-  `nqptp`, ffmpeg, libplist, libsodium, libgcrypt). Aucun paquet externe requis.
-- Firmware Wi-Fi : `BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI_WIFI`.
-- DTB : il n'existe pas de `bcm2710-rpi-3-a-plus.dtb` ; le firmware du 3 A+
-  charge `bcm2710-rpi-3-b-plus.dtb`, qui est inclus.
-- Overlays `iqaudio-dacplus`, `hifiberry-dacplusadc` et
-  `hifiberry-dacplusadcpro` présents.
-- `bcm2709_defconfig` a `CONFIG_SQUASHFS=m` : le fragment `linux.fragment` le
-  passe en `y`, sinon la racine ne peut pas être montée.
+- AirPlay 2 option: `BR2_PACKAGE_SHAIRPORT_SYNC_AIRPLAY2` (selects `nqptp`,
+  ffmpeg, libplist, libsodium, libgcrypt). No external package needed.
+- Wi-Fi firmware: `BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI_WIFI`.
+- DTB: there is no `bcm2710-rpi-3-a-plus.dtb`; the 3 A+ firmware loads
+  `bcm2710-rpi-3-b-plus.dtb`, which is included.
+- `iqaudio-dacplus`, `hifiberry-dacplusadc`, `hifiberry-dacplusadcpro`,
+  `hifiberry-dacplus-std` and `hifiberry-dac` overlays are present.
+- `bcm2709_defconfig` has `CONFIG_SQUASHFS=m`: `linux.fragment` turns it into
+  `y`, otherwise the root cannot be mounted.
+- `bcm2709_defconfig` compresses modules with xz: `BR2_PACKAGE_XZ=y` is
+  required for kmod to load them.
 
-Restent à vérifier sur le matériel : noms des cartes et mixers ALSA
-(`aplay -l`, `amixer scontrols`) et version exacte de la HiFiBerry.
+Still to check on hardware: ALSA card and mixer names (`aplay -l`,
+`amixer scontrols`) for each HAT.
 
-## Plan de réalisation
+## Implementation plan
 
-Les étapes 1 à 6 du plan (section 9 des spécifications) sont regroupées dans
-le defconfig ; la validation (section 10) se fait sur le matériel.
+Steps 1 to 6 of the plan (section 9 of the specification) are combined in
+the defconfig; validation (section 10) happens on hardware.
 
-- [ ] `mount` : `/` en `squashfs (ro)`, `/boot` en `vfat (ro)`
-- [ ] Aucune écriture sur `mmcblk0` (`cat /proc/diskstats`)
-- [ ] 10 coupures de courant pendant la lecture, 10 redémarrages corrects
-- [ ] Même image sur Pi 2 B et Pi 3 A+
-- [ ] Son et volume matériel sur DigiAMP+ et DAC+ ADC
-- [ ] Enceintes visibles et sélectionnables ensemble sur iOS
-- [ ] Synchro correcte entre deux enceintes de la même pièce
-- [ ] Wi-Fi stable sur le 3 A+ pendant une longue écoute
+- [ ] `mount`: `/` as `squashfs (ro)`, `/boot` as `vfat (ro)`
+- [ ] No writes to `mmcblk0` (`cat /proc/diskstats`)
+- [ ] 10 power cuts during playback, 10 clean reboots
+- [ ] Same image on Pi 2 B and Pi 3 A+
+- [ ] Sound and hardware volume on DigiAMP+ and DAC+ ADC
+- [ ] Speakers visible and selectable together on iOS
+- [ ] Correct sync between two speakers in the same room
+- [ ] Stable Wi-Fi on the 3 A+ during long listening sessions

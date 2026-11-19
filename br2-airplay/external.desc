@@ -1,2 +1,2 @@
 name: AIRPLAY
-desc: Endpoints audio AirPlay 2 multiroom en lecture seule (Raspberry Pi 2 B / 3 A+, ARMv7)
+desc: Read-only multiroom AirPlay 2 audio endpoints (Raspberry Pi 2 B / 3 A+, ARMv7)

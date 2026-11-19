@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Enceinte AirPlay</title>
+<title>AirPlay Speaker</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b5bd6'/%3E%3Cpath d='M9 13h4l5-4v14l-5-4H9z' fill='white'/%3E%3Cpath d='M21 12a5 5 0 0 1 0 8' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -49,7 +49,7 @@ body {
 }
 main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 40px; }
 
-/* --- En-tête --- */
+/* --- Header --- */
 .hero {
   position: relative;
   overflow: hidden;
@@ -99,7 +99,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 40px; }
 @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 14px; } }
 @media (prefers-reduced-motion: reduce) { .playing .eq i { animation: none; height: 10px; } }
 
-/* --- Bandeau d'alerte --- */
+/* --- Alert banner --- */
 .alert {
   display: none;
   margin-top: 12px;
@@ -113,7 +113,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 40px; }
 }
 .alert.show { display: block; }
 
-/* --- Cartes --- */
+/* --- Cards --- */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -252,8 +252,8 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6.5" r="1"/></svg>
     </div>
     <div class="who">
-      <h1 id="name">Enceinte AirPlay</h1>
-      <div class="sub" id="subtitle">Connexion…</div>
+      <h1 id="name">AirPlay Speaker</h1>
+      <div class="sub" id="subtitle">Connecting…</div>
     </div>
     <div class="pill" id="state"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="state-label">…</span></div>
   </header>
@@ -267,12 +267,12 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
     </article>
 
     <article class="card">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M1.5 9a15 15 0 0 1 21 0"/><circle cx="12" cy="19.5" r="1"/></svg>Réseau</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M1.5 9a15 15 0 0 1 21 0"/><circle cx="12" cy="19.5" r="1"/></svg>Network</h2>
       <div id="network"></div>
     </article>
 
     <article class="card">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></svg>Système</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></svg>System</h2>
       <div id="system"></div>
     </article>
 
@@ -282,7 +282,7 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
     </article>
 
     <article class="card">
-      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stockage</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Storage</h2>
       <div id="storage"></div>
     </article>
 
@@ -294,10 +294,10 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
     <article class="card wide">
       <details id="logs-box">
         <summary>
-          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>Journal système</h2>
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>System log</h2>
           <span class="chev" aria-hidden="true">›</span>
         </summary>
-        <div style="margin-top:12px"><button type="button" id="logs-refresh">Actualiser</button></div>
+        <div style="margin-top:12px"><button type="button" id="logs-refresh">Refresh</button></div>
         <pre class="logs" id="logs"></pre>
       </details>
     </article>
@@ -305,7 +305,7 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
 
   <footer>
     <span class="live"><span class="dot" id="live-dot"></span><span id="live-label">…</span></span>
-    · lecture seule
+    · read-only
   </footer>
 </main>
 
@@ -313,13 +313,13 @@ footer .live { display: inline-flex; align-items: center; gap: 6px; }
 "use strict";
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const num = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d }));
+const num = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("en-GB", { maximumFractionDigits: d, minimumFractionDigits: d }));
 
 function duration(s) {
   if (s == null) return "—";
   s = Math.floor(s);
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
-  if (d) return `${d} j ${h} h`;
+  if (d) return `${d} d ${h} h`;
   if (h) return `${h} h ${m} min`;
   if (m) return `${m} min`;
   return `${s} s`;
@@ -340,49 +340,49 @@ function signalBars(dbm) {
 
 function band(mhz) {
   if (!mhz) return "—";
-  if (mhz < 3000) return `2,4 GHz · canal ${Math.round((mhz - 2407) / 5)}`;
-  if (mhz < 5950) return `5 GHz · canal ${Math.round((mhz - 5000) / 5)}`;
+  if (mhz < 3000) return `2.4 GHz · channel ${Math.round((mhz - 2407) / 5)}`;
+  if (mhz < 5950) return `5 GHz · channel ${Math.round((mhz - 5000) / 5)}`;
   return `${num(mhz)} MHz`;
 }
 
-const MODES = { stereo: "Stéréo", mono: "Mono (G+D)", left: "Gauche seul", right: "Droite seul", reverse: "Stéréo inversée" };
+const MODES = { stereo: "Stereo", mono: "Mono (L+R)", left: "Left only", right: "Right only", reverse: "Reversed stereo" };
 
 function renderAudio(a) {
   let h = "";
   if (a.volume && a.volume.percent != null) {
     const db = a.volume.db != null ? ` · ${num(a.volume.db, 1)} dB` : "";
-    h += meter(`Volume (${a.mixer})`, `${num(a.volume.percent)} %${db}`, a.volume.percent);
+    h += meter(`Volume (${a.mixer})`, `${num(a.volume.percent)}%${db}`, a.volume.percent);
   }
   if (!a.cards.length) {
-    h += `<p class="empty">Aucune carte son détectée : vérifier la ligne dtoverlay de config.txt.</p>`;
+    h += `<p class="empty">No sound card detected: check the dtoverlay line in config.txt.</p>`;
   }
-  for (const c of a.cards) h += row(`Carte ${c.index}`, esc(c.name || c.id));
-  h += row("Mixage", esc(MODES[a.mode] || a.mode));
-  h += row("Sortie", esc(a.output_device), "mono");
+  for (const c of a.cards) h += row(`Card ${c.index}`, esc(c.name || c.id));
+  h += row("Channel mix", esc(MODES[a.mode] || a.mode));
+  h += row("Output", esc(a.output_device), "mono");
   if (a.stream) {
-    const fmt = [a.stream.rate && `${num(a.stream.rate / 1000, 1)} kHz`, a.stream.format, a.stream.channels && `${a.stream.channels} canaux`].filter(Boolean).join(" · ");
-    h += row("Flux", esc(fmt || a.stream.state));
+    const fmt = [a.stream.rate && `${num(a.stream.rate / 1000, 1)} kHz`, a.stream.format, a.stream.channels && `${a.stream.channels} channels`].filter(Boolean).join(" · ");
+    h += row("Stream", esc(fmt || a.stream.state));
   } else {
-    h += row("Flux", `<span class="tag">fermé</span>`);
+    h += row("Stream", `<span class="tag">closed</span>`);
   }
   $("audio").innerHTML = h;
 }
 
 function renderNetwork(list) {
-  if (!list.length) { $("network").innerHTML = `<p class="empty">Aucune interface.</p>`; return; }
+  if (!list.length) { $("network").innerHTML = `<p class="empty">No network interface.</p>`; return; }
   $("network").innerHTML = list.map((i) => {
     const up = i.state === "up" || i.ipv4.length > 0;
     let h = `<div class="iface"><div class="iface-head"><span class="dot ${up ? "ok" : "bad"}"></span>${esc(i.name)}
       <span class="tag ${up ? "ok" : "bad"}" style="margin-left:auto">${esc(i.state || "?")}</span></div>`;
-    h += row("Adresse IP", i.ipv4.length ? i.ipv4.map(esc).join("<br>") : "—", "mono");
+    h += row("IP address", i.ipv4.length ? i.ipv4.map(esc).join("<br>") : "—", "mono");
     if (i.wifi) {
       if (i.wifi.connected) {
-        h += row("Réseau", esc(i.wifi.ssid));
+        h += row("Network", esc(i.wifi.ssid));
         h += row("Signal", `${signalBars(i.wifi.signal_dbm)}${num(i.wifi.signal_dbm)} dBm`);
-        h += row("Bande", esc(band(i.wifi.freq_mhz)));
-        if (i.wifi.tx_mbps) h += row("Débit", `${num(i.wifi.tx_mbps, 1)} Mbit/s`);
+        h += row("Band", esc(band(i.wifi.freq_mhz)));
+        if (i.wifi.tx_mbps) h += row("Bitrate", `${num(i.wifi.tx_mbps, 1)} Mbit/s`);
       } else {
-        h += row("Wi-Fi", `<span class="tag bad">non connecté</span>`);
+        h += row("Wi-Fi", `<span class="tag bad">not connected</span>`);
       }
     }
     h += row("MAC", esc(i.mac), "mono");
@@ -395,17 +395,17 @@ function renderSystem(s) {
   const memPct = memUsed != null ? (memUsed / s.mem_total_kb) * 100 : null;
   const temp = s.temp_c;
   let h = `<div class="stats">
-      <div class="stat"><div class="l">Allumé depuis</div><div class="n">${duration(s.uptime_s)}</div></div>
-      <div class="stat"><div class="l">Charge</div><div class="n">${s.load.length ? num(s.load[0], 2) : "—"}</div></div>
+      <div class="stat"><div class="l">Uptime</div><div class="n">${duration(s.uptime_s)}</div></div>
+      <div class="stat"><div class="l">Load</div><div class="n">${s.load.length ? num(s.load[0], 2) : "—"}</div></div>
       <div class="stat"><div class="l">CPU</div><div class="n">${s.cpu_mhz ? (s.cpu_mhz >= 1000 ? num(s.cpu_mhz / 1000, 1) + " GHz" : num(s.cpu_mhz) + " MHz") : "—"}</div></div>
     </div>`;
-  if (temp != null) h += meter("Température", `${num(temp, 1)} °C`, (temp / 85) * 100, temp >= 80 ? "bad" : temp >= 70 ? "warn" : "");
-  if (memPct != null) h += meter("Mémoire", `${num(memUsed / 1024)} / ${num(s.mem_total_kb / 1024)} Mo`, memPct, memPct > 90 ? "bad" : memPct > 75 ? "warn" : "");
+  if (temp != null) h += meter("Temperature", `${num(temp, 1)} °C`, (temp / 85) * 100, temp >= 80 ? "bad" : temp >= 70 ? "warn" : "");
+  if (memPct != null) h += meter("Memory", `${num(memUsed / 1024)} / ${num(s.mem_total_kb / 1024)} MB`, memPct, memPct > 90 ? "bad" : memPct > 75 ? "warn" : "");
   if (s.undervoltage != null) {
-    h += row("Alimentation", s.undervoltage ? `<span class="tag bad">sous-tension</span>` : `<span class="tag ok">correcte</span>`);
+    h += row("Power supply", s.undervoltage ? `<span class="tag bad">undervoltage</span>` : `<span class="tag ok">OK</span>`);
   }
-  h += row("Modèle", esc(s.model || "—"));
-  h += row("Noyau", esc(s.kernel || "—"), "mono");
+  h += row("Model", esc(s.model || "—"));
+  h += row("Kernel", esc(s.kernel || "—"), "mono");
   $("system").innerHTML = h;
 }
 
@@ -414,7 +414,7 @@ function renderServices(list) {
     .filter((s) => s.running || s.essential)
     .map((s) => {
       const cls = s.running ? "ok" : s.essential ? "bad" : "";
-      const age = s.running ? `depuis ${duration(s.age_s)}` : "arrêté";
+      const age = s.running ? `up ${duration(s.age_s)}` : "stopped";
       return `<div class="svc"><span class="dot ${cls}"></span><span class="name">${esc(s.label)}</span><span class="age">${esc(age)}</span></div>`;
     })
     .join("");
@@ -422,19 +422,19 @@ function renderServices(list) {
 
 function renderStorage(st) {
   const mount = (label, m, expect) => {
-    if (!m) return row(label, "non monté");
+    if (!m) return row(label, "not mounted");
     const ok = m.ro && (!expect || m.fs === expect);
-    return row(label, `<span class="mono">${esc(m.fs)}</span> <span class="tag ${ok ? "ok" : "bad"}">${m.ro ? "lecture seule" : "écriture"}</span>`);
+    return row(label, `<span class="mono">${esc(m.fs)}</span> <span class="tag ${ok ? "ok" : "bad"}">${m.ro ? "read-only" : "writable"}</span>`);
   };
-  let h = mount("Système /", st.root, "squashfs") + mount("Partition boot", st.boot, "vfat");
+  let h = mount("System /", st.root, "squashfs") + mount("Boot partition", st.boot, "vfat");
   if (st.sd) {
-    h += row("Écritures carte SD", st.sd.writes === 0 ? `<span class="tag ok">aucune</span>` : `<span class="tag bad">${num(st.sd.writes)} (${num(st.sd.sectors_written / 2)} Ko)</span>`);
+    h += row("SD card writes", st.sd.writes === 0 ? `<span class="tag ok">none</span>` : `<span class="tag bad">${num(st.sd.writes)} (${num(st.sd.sectors_written / 2)} KB)</span>`);
   }
   $("storage").innerHTML = h;
 }
 
 function renderConfig(cfg, boot) {
-  let h = cfg.length ? cfg.map(([k, v]) => row(k, v === "" ? `<span class="empty">vide</span>` : esc(v), "mono")).join("") : `<p class="empty">/run/airplay.env absent.</p>`;
+  let h = cfg.length ? cfg.map(([k, v]) => row(k, v === "" ? `<span class="empty">empty</span>` : esc(v), "mono")).join("") : `<p class="empty">/run/airplay.env not found.</p>`;
   if (boot.length) {
     h += `<div class="row"><span class="k">config.txt</span><span class="v mono">${boot.map((b) => esc((b.section !== "all" ? `[${b.section}] ` : "") + b.line)).join("<br>")}</span></div>`;
   }
@@ -454,12 +454,12 @@ async function refresh() {
     const s = await r.json();
     failures = 0;
 
-    const name = s.name || s.hostname || "Enceinte AirPlay";
+    const name = s.name || s.hostname || "AirPlay Speaker";
     document.title = `${name} · AirPlay`;
     $("name").textContent = name;
     $("subtitle").textContent = [s.hostname && `${s.hostname}.local`, s.system.model].filter(Boolean).join(" · ");
     $("hero").classList.toggle("playing", s.audio.playing);
-    $("state-label").textContent = s.audio.playing ? "En lecture" : "En attente";
+    $("state-label").textContent = s.audio.playing ? "Playing" : "Idle";
 
     renderAudio(s.audio);
     renderNetwork(s.network);
@@ -469,19 +469,19 @@ async function refresh() {
     renderConfig(s.config, s.boot_config);
 
     const problems = [];
-    if (s.system.undervoltage) problems.push("Sous-tension détectée : alimentation insuffisante (risque de craquements et de plantages).");
+    if (s.system.undervoltage) problems.push("Undervoltage detected: the power supply is too weak (risk of crackling and crashes).");
     const down = s.services.filter((x) => x.essential && !x.running).map((x) => x.label);
-    if (down.length) problems.push(`Service arrêté : ${down.join(", ")}.`);
-    if (!s.audio.cards.length) problems.push("Aucune carte son détectée.");
+    if (down.length) problems.push(`Service stopped: ${down.join(", ")}.`);
+    if (!s.audio.cards.length) problems.push("No sound card detected.");
     setAlert(problems.join(" "));
 
     $("live-dot").className = "dot ok";
-    $("live-label").textContent = `Mis à jour à ${new Date().toLocaleTimeString("fr-FR")}`;
+    $("live-label").textContent = `Updated at ${new Date().toLocaleTimeString("en-GB")}`;
   } catch (e) {
     failures++;
     $("live-dot").className = "dot bad";
-    $("live-label").textContent = "Enceinte injoignable";
-    if (failures > 1) setAlert("Connexion perdue avec l'enceinte. Nouvel essai en cours…");
+    $("live-label").textContent = "Speaker unreachable";
+    if (failures > 1) setAlert("Lost connection to the speaker. Retrying…");
   }
 }
 
@@ -490,10 +490,10 @@ async function loadLogs() {
     const r = await fetch("/api/logs", { cache: "no-store" });
     const text = await r.text();
     const pre = $("logs");
-    pre.textContent = text || "Journal vide.";
+    pre.textContent = text || "Log is empty.";
     pre.scrollTop = pre.scrollHeight;
   } catch (e) {
-    $("logs").textContent = "Impossible de lire le journal.";
+    $("logs").textContent = "Cannot read the log.";
   }
 }
 $("logs-box").addEventListener("toggle", (e) => { if (e.target.open) loadLogs(); });

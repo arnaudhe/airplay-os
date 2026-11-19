@@ -1,7 +1,7 @@
-# Image AirPlay 2 unique pour Raspberry Pi 2 B v1.1 et Pi 3 A+ (32 bits).
-# Base : configs/raspberrypi2_defconfig de Buildroot 2026.02.x.
+# Single AirPlay 2 image for Raspberry Pi 2 B v1.1 and Pi 3 A+ (32-bit).
+# Based on Buildroot 2026.02.x configs/raspberrypi2_defconfig.
 
-# --- Architecture : ARMv7 Cortex-A7, EABIhf, NEON/VFPv4 ---
+# --- Architecture: ARMv7 Cortex-A7, EABIhf, NEON/VFPv4 ---
 BR2_arm=y
 BR2_cortex_a7=y
 BR2_ARM_EABIHF=y
@@ -11,44 +11,44 @@ BR2_ARM_FPU_NEON_VFPV4=y
 BR2_CCACHE=y
 BR2_CCACHE_DIR="$(TOPDIR)/../.buildroot-ccache"
 BR2_DOWNLOAD_FORCE_CHECK_HASHES=y
-# Contient les hash du noyau raspberrypi/linux utilisé ci-dessous
+# Holds the hashes of the raspberrypi/linux kernel used below
 BR2_GLOBAL_PATCH_DIR="board/raspberrypi/patches"
 
-# --- Toolchain interne (glibc, C++ requis par shairport-sync) ---
+# --- Internal toolchain (glibc, C++ required by shairport-sync) ---
 BR2_TOOLCHAIN_BUILDROOT=y
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
-# En-têtes tirés du noyau Raspberry Pi lui-même : ils correspondent
-# exactement au noyau qui tourne, et leur hash est déjà fourni par
-# BR2_GLOBAL_PATCH_DIR (qui remplace le .hash de linux-headers : une version
-# kernel.org comme 6.12.91 y serait refusée avec "No hash found").
+# Headers taken from the Raspberry Pi kernel itself: they match the running
+# kernel exactly, and their hash is already provided by BR2_GLOBAL_PATCH_DIR
+# (which overrides the linux-headers .hash file: a kernel.org version such
+# as 6.12.91 would be rejected there with "No hash found").
 BR2_KERNEL_HEADERS_AS_KERNEL=y
 BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y
 
-# --- Système ---
+# --- System ---
 BR2_TARGET_GENERIC_HOSTNAME="airplay"
 BR2_TARGET_GENERIC_ISSUE="AirPlay endpoint"
 BR2_INIT_BUSYBOX=y
 BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y
-# Racine en lecture seule : pas de "mount -o remount,rw /" dans inittab
+# Read-only root: no "mount -o remount,rw /" in inittab
 # BR2_TARGET_GENERIC_REMOUNT_ROOTFS_RW is not set
 BR2_TARGET_GENERIC_GETTY_PORT="tty1"
-# Réseau géré par /etc/init.d/S40network (overlay), pas par ifupdown
+# Network handled by /etc/init.d/S40network (overlay), not by ifupdown
 BR2_SYSTEM_DHCP=""
 # BR2_PACKAGE_IFUPDOWN_SCRIPTS is not set
 BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/rootfs_overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/post-image.sh"
 
-# --- Noyau Raspberry Pi (même révision que raspberrypi2_defconfig) ---
+# --- Raspberry Pi kernel (same revision as raspberrypi2_defconfig) ---
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
 BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,21b410140c47ffab5668399f6f143c7d7b935c8b)/linux-21b410140c47ffab5668399f6f143c7d7b935c8b.tar.gz"
 BR2_LINUX_KERNEL_DEFCONFIG="bcm2709"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/linux.fragment"
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
-# Pi 2 B (v1.1 = bcm2709, v1.2 = bcm2710) ; Pi 3 B/B+ ; le Pi 3 A+ utilise
-# bcm2710-rpi-3-b-plus.dtb (choisi automatiquement par le firmware).
+# Pi 2 B (v1.1 = bcm2709, v1.2 = bcm2710); Pi 3 B/B+; the Pi 3 A+ uses
+# bcm2710-rpi-3-b-plus.dtb (picked automatically by the firmware).
 BR2_LINUX_KERNEL_INTREE_DTS_NAME="broadcom/bcm2709-rpi-2-b broadcom/bcm2710-rpi-2-b broadcom/bcm2710-rpi-3-b broadcom/bcm2710-rpi-3-b-plus"
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
 
@@ -58,19 +58,19 @@ BR2_PACKAGE_RPI_FIRMWARE_BOOTCODE_BIN=y
 BR2_PACKAGE_RPI_FIRMWARE_VARIANT_PI=y
 BR2_PACKAGE_RPI_FIRMWARE_CONFIG_FILE="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/config.txt"
 BR2_PACKAGE_RPI_FIRMWARE_CMDLINE_FILE="$(BR2_EXTERNAL_AIRPLAY_PATH)/board/airplay/cmdline.txt"
-# DTB compilés par le noyau, overlays (.dtbo) fournis par le firmware
+# DTBs built by the kernel, overlays (.dtbo) provided by the firmware
 BR2_PACKAGE_RPI_FIRMWARE_INSTALL_DTB_OVERLAYS=y
-# Wi-Fi CYW43455 du Pi 3 A+
+# CYW43455 Wi-Fi of the Pi 3 A+
 BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI=y
 BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI_WIFI=y
 
-# --- Paquets ---
+# --- Packages ---
 BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
 BR2_PACKAGE_KMOD=y
 BR2_PACKAGE_KMOD_TOOLS=y
-# bcm2709_defconfig compresse les modules (CONFIG_MODULE_COMPRESS_XZ) :
-# sans xz, kmod ne sait pas lire les .ko.xz et AUCUN module ne se charge
-# (HAT audio, Wi-Fi brcmfmac, IPv6...).
+# bcm2709_defconfig compresses modules (CONFIG_MODULE_COMPRESS_XZ): without
+# xz, kmod cannot read .ko.xz files and NO module loads (audio HAT, brcmfmac
+# Wi-Fi, IPv6...).
 BR2_PACKAGE_XZ=y
 BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_ALSA_UTILS_AMIXER=y
@@ -86,16 +86,16 @@ BR2_PACKAGE_DROPBEAR=y
 BR2_PACKAGE_WPA_SUPPLICANT=y
 BR2_PACKAGE_WPA_SUPPLICANT_NL80211=y
 BR2_PACKAGE_WPA_SUPPLICANT_PASSPHRASE=y
-# Option -s de S40network : journal dans /var/log/messages
+# -s option used by S40network: log to /var/log/messages
 BR2_PACKAGE_WPA_SUPPLICANT_DEBUG_SYSLOG=y
 BR2_PACKAGE_IW=y
 BR2_PACKAGE_WIRELESS_REGDB=y
-# Interface web en lecture seule (BR2_EXTERNAL, Rust)
+# Read-only web interface (BR2_EXTERNAL, Rust)
 BR2_PACKAGE_AIRPLAY_WEB=y
-# seedrng voudrait écrire dans /var/lib : inutile en lecture seule
+# seedrng wants to write to /var/lib: pointless on a read-only root
 # BR2_PACKAGE_URANDOM_SCRIPTS is not set
 
-# --- Images : squashfs, pas d'ext4 ---
+# --- Images: squashfs, no ext4 ---
 BR2_TARGET_ROOTFS_SQUASHFS=y
 BR2_TARGET_ROOTFS_SQUASHFS4_ZSTD=y
 # BR2_TARGET_ROOTFS_TAR is not set

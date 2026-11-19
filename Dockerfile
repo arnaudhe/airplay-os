@@ -1,4 +1,4 @@
-# Environnement de build Buildroot (arm64 natif sur Apple Silicon).
+# Buildroot build environment (native arm64 on Apple Silicon).
 FROM debian:bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc g++ make patch perl python3 file wget ca-certificates \

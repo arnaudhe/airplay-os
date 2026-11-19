@@ -1,7 +1,7 @@
-# config.txt — firmware Raspberry Pi, image AirPlay 2 (Pi 2 B et Pi 3 A+)
+# config.txt — Raspberry Pi firmware, AirPlay 2 image (Pi 2 B and Pi 3 A+)
 #
-# Image 32 bits : PAS de arm_64bit=1. Le firmware charge kernel7.img et
-# choisit lui-même le device tree (bcm2709-rpi-2-b / bcm2710-rpi-3-b-plus).
+# 32-bit image: NO arm_64bit=1. The firmware loads kernel7.img and picks the
+# device tree itself (bcm2709-rpi-2-b / bcm2710-rpi-3-b-plus).
 
 start_file=start.elf
 fixup_file=fixup.dat
@@ -9,19 +9,23 @@ kernel=kernel7.img
 
 disable_splash=1
 
-# Sortie audio analogique/HDMI intégrée désactivée : seul le HAT I2S sert.
+# Built-in analog/HDMI audio disabled: only the I2S HAT is used.
 dtparam=audio=off
 
-# --- HAT audio : garder UNE SEULE ligne dtoverlay active ---
-# IQaudio DigiAMP+ (sans unmute_amp, l'ampli reste coupé)
+# --- Audio HAT: keep ONLY ONE dtoverlay line active ---
+# IQaudio DigiAMP+ (without unmute_amp, the amplifier stays muted)
 dtoverlay=iqaudio-dacplus,unmute_amp
 # HiFiBerry DAC+ ADC (standard)
 #dtoverlay=hifiberry-dacplusadc
 # HiFiBerry DAC+ ADC Pro
 #dtoverlay=hifiberry-dacplusadcpro
+# HiFiBerry DAC+ Standard
+#dtoverlay=hifiberry-dacplus-std
+# HiFiBerry DAC / DAC+ Light, Pimoroni pHAT DAC (PCM5102A: set MIXER="")
+#dtoverlay=hifiberry-dac
 
 [pi3]
-# Bluetooth inutile ; il partage l'antenne du Wi-Fi CYW43455.
+# Bluetooth is unused; it shares the CYW43455 Wi-Fi antenna.
 dtoverlay=disable-bt
 
 [all]

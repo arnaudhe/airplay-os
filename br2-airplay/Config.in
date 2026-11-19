@@ -1,3 +1,3 @@
-# Paquets additionnels. shairport-sync 4.3.7 (AirPlay 2) et nqptp 1.2.4 sont
-# fournis par Buildroot 2026.02.x.
+# Additional packages. shairport-sync 4.3.7 (AirPlay 2) and nqptp 1.2.4 are
+# provided by Buildroot 2026.02.x.
 source "$BR2_EXTERNAL_AIRPLAY_PATH/package/airplay-web/Config.in"

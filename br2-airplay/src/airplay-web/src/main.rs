@@ -1,15 +1,15 @@
-//! airplay-web — interface web en lecture seule d'une enceinte AirPlay 2.
+//! airplay-web — read-only web interface of an AirPlay 2 speaker.
 //!
-//! Petit serveur HTTP/1.1 sans dépendance :
-//!   GET /             page d'état (HTML, CSS et JS intégrés au binaire)
-//!   GET /api/status   état du système en JSON
-//!   GET /api/logs     fin de /var/log/messages (texte)
+//! Small dependency-free HTTP/1.1 server:
+//!   GET /             status page (HTML, CSS and JS embedded in the binary)
+//!   GET /api/status   system status as JSON
+//!   GET /api/logs     tail of /var/log/messages (plain text)
 //!
-//! Rien n'est jamais écrit : ni sur la carte SD, ni dans /run.
+//! Nothing is ever written: neither to the SD card nor to /run.
 //!
-//! Options (variables d'environnement) :
-//!   AIRPLAY_WEB_LISTEN  adresse d'écoute (défaut 0.0.0.0:80)
-//!   AIRPLAY_WEB_ROOT    racine des fichiers lus (défaut /, pour le développement)
+//! Options (environment variables):
+//!   AIRPLAY_WEB_LISTEN  listen address (default 0.0.0.0:80)
+//!   AIRPLAY_WEB_ROOT    root of the files read (default /, for development)
 
 mod json;
 mod status;
@@ -33,11 +33,11 @@ fn main() {
     let listener = match TcpListener::bind(&listen) {
         Ok(l) => l,
         Err(e) => {
-            eprintln!("airplay-web: impossible d'écouter sur {listen} : {e}");
+            eprintln!("airplay-web: cannot listen on {listen}: {e}");
             std::process::exit(1);
         }
     };
-    eprintln!("airplay-web: écoute sur {listen}");
+    eprintln!("airplay-web: listening on {listen}");
 
     let sys = Arc::new(status::Sys::new(root));
     let active = Arc::new(AtomicUsize::new(0));
@@ -45,7 +45,7 @@ fn main() {
     for stream in listener.incoming() {
         let Ok(mut stream) = stream else { continue };
         if active.load(Ordering::Relaxed) >= MAX_CONNECTIONS {
-            let _ = respond(&mut stream, "503 Service Unavailable", "text/plain", b"occupe\n", false);
+            let _ = respond(&mut stream, "503 Service Unavailable", "text/plain", b"busy\n", false);
             continue;
         }
         active.fetch_add(1, Ordering::Relaxed);
@@ -61,7 +61,7 @@ fn handle(stream: &mut TcpStream, sys: &status::Sys) -> std::io::Result<()> {
     stream.set_read_timeout(Some(Duration::from_secs(5)))?;
     stream.set_write_timeout(Some(Duration::from_secs(5)))?;
 
-    // Lecture de l'en-tête seulement (pas de corps : uniquement GET/HEAD)
+    // Read the header only (no body: GET/HEAD only)
     let mut buf = Vec::with_capacity(1024);
     let mut chunk = [0u8; 1024];
     while !buf.windows(4).any(|w| w == b"\r\n\r\n") {
@@ -83,7 +83,7 @@ fn handle(stream: &mut TcpStream, sys: &status::Sys) -> std::io::Result<()> {
 
     let head_only = method == "HEAD";
     if method != "GET" && !head_only {
-        return respond(stream, "405 Method Not Allowed", "text/plain", b"lecture seule\n", false);
+        return respond(stream, "405 Method Not Allowed", "text/plain", b"read-only\n", false);
     }
 
     match path {
@@ -98,7 +98,7 @@ fn handle(stream: &mut TcpStream, sys: &status::Sys) -> std::io::Result<()> {
             let body = sys.logs(LOG_LINES);
             respond(stream, "200 OK", "text/plain; charset=utf-8", body.as_bytes(), head_only)
         }
-        _ => respond(stream, "404 Not Found", "text/plain", b"introuvable\n", head_only),
+        _ => respond(stream, "404 Not Found", "text/plain", b"not found\n", head_only),
     }
 }
 

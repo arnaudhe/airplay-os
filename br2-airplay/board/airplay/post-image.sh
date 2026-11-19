@@ -1,17 +1,17 @@
 #!/bin/sh
-# post-image.sh — assemble la partition boot et l'image sdcard.img.
-# config.txt et cmdline.txt sont déjà copiés dans rpi-firmware/ par le
-# paquet rpi-firmware (BR2_PACKAGE_RPI_FIRMWARE_{CONFIG,CMDLINE}_FILE).
+# post-image.sh — assembles the boot partition and the sdcard.img image.
+# config.txt and cmdline.txt are already copied into rpi-firmware/ by the
+# rpi-firmware package (BR2_PACKAGE_RPI_FIRMWARE_{CONFIG,CMDLINE}_FILE).
 set -eu
 
 BOARD_DIR="$(dirname "$0")"
 GENIMAGE_CFG="${BOARD_DIR}/genimage.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 
-# Configuration propre à chaque appareil (modèle par défaut)
+# Per-device configuration (default template)
 install -m 0644 "${BOARD_DIR}/airplay.conf" "${BINARIES_DIR}/rpi-firmware/airplay.conf"
 
-# genimage n'a pas besoin du rootfs (le squashfs est déjà construit)
+# genimage does not need the rootfs (the squashfs is already built)
 ROOTPATH_TMP="$(mktemp -d)"
 trap 'rm -rf "${ROOTPATH_TMP}"' EXIT
 

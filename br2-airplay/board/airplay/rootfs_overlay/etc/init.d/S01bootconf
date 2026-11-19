@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# S01bootconf — configuration propre à l'appareil.
+# S01bootconf — per-device configuration.
 #
-# Lit /boot/airplay.conf (partition FAT, lecture seule) et génère dans /run :
-#   /run/airplay.env            valeurs normalisées, lues par les autres scripts
-#   /run/shairport-sync.conf    (lien /etc/shairport-sync.conf)
-#   /run/wpa_supplicant.conf    (lien /etc/wpa_supplicant.conf)
-#   /run/authorized_keys        (lien /root/.ssh/authorized_keys)
-#   /run/dropbear/              clés d'hôte SSH éventuelles
-# et règle le hostname.
+# Reads /boot/airplay.conf (FAT partition, read-only) and generates in /run:
+#   /run/airplay.env            normalized values, read by the other scripts
+#   /run/shairport-sync.conf    (symlink /etc/shairport-sync.conf)
+#   /run/wpa_supplicant.conf    (symlink /etc/wpa_supplicant.conf)
+#   /run/authorized_keys        (symlink /root/.ssh/authorized_keys)
+#   /run/dropbear/              SSH host keys, if provided
+# and sets the hostname.
 
 BOOT_CONF=/boot/airplay.conf
 ENV_FILE=/run/airplay.env
@@ -16,15 +16,15 @@ TPL=/etc/shairport-sync.conf.tpl
 
 log() { echo "bootconf: $*"; }
 
-# Échappe une valeur pour une chaîne libconfig "..."
+# Escapes a value for a libconfig "..." string
 cfg_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
-# Échappe une valeur pour le remplacement d'un sed s|...|...|
+# Escapes a value for the replacement part of a sed s|...|...|
 sed_escape() { printf '%s' "$1" | sed -e 's/[\\|&]/\\&/g'; }
-# Met une valeur entre apostrophes pour le shell
+# Single-quotes a value for the shell
 shell_quote() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
 
 load_conf() {
-	# Valeurs par défaut
+	# Defaults
 	NAME="AirPlay"
 	HOSTNAME=""
 	WIFI_SSID=""
@@ -37,17 +37,17 @@ load_conf() {
 	AMIXER_CMDS=""
 
 	if [ ! -r "$BOOT_CONF" ]; then
-		log "$BOOT_CONF absent, valeurs par défaut"
+		log "$BOOT_CONF missing, using defaults"
 		return
 	fi
 
-	# Fichier édité sur Mac/Windows : retirer les fins de ligne CRLF
+	# File edited on Mac/Windows: strip CRLF line endings
 	tr -d '\r' < "$BOOT_CONF" > /run/airplay.conf.raw
 	if sh -n /run/airplay.conf.raw 2>/dev/null; then
 		# shellcheck source=/dev/null
 		. /run/airplay.conf.raw
 	else
-		log "erreur de syntaxe dans $BOOT_CONF, valeurs par défaut"
+		log "syntax error in $BOOT_CONF, using defaults"
 	fi
 	rm -f /run/airplay.conf.raw
 }
@@ -86,7 +86,7 @@ gen_wpa() {
 	rm -f /run/wpa_supplicant.conf
 	[ -n "$WIFI_SSID" ] || return 0
 
-	# SSID en hexadécimal : aucun problème de guillemets ou d'accents
+	# Hex-encoded SSID: no trouble with quotes or accented characters
 	ssid_hex=$(printf '%s' "$WIFI_SSID" | od -An -tx1 -v | tr -d ' \n')
 
 	if [ -z "$WIFI_PSK" ]; then
@@ -97,7 +97,7 @@ gen_wpa() {
 		psk=$(wpa_passphrase "$WIFI_SSID" "$WIFI_PSK" 2>/dev/null \
 			| sed -n 's/^[[:space:]]*psk=\([0-9a-f]\{64\}\)$/\1/p')
 		if [ -z "$psk" ]; then
-			log "WIFI_PSK invalide (8 à 63 caractères attendus)"
+			log "invalid WIFI_PSK (8 to 63 characters expected)"
 			return 1
 		fi
 		key="psk=$psk"
@@ -123,7 +123,7 @@ copy_ssh() {
 		tr -d '\r' < /boot/authorized_keys > /run/authorized_keys
 		chmod 0600 /run/authorized_keys
 	fi
-	# Clés d'hôte fixes (sinon dropbear en génère de nouvelles à chaque boot)
+	# Fixed host keys (otherwise dropbear generates new ones at every boot)
 	for k in /boot/dropbear_*_host_key; do
 		[ -r "$k" ] || continue
 		mkdir -p /run/dropbear
@@ -140,8 +140,8 @@ start() {
 		basic|auto|soxr) ;;
 		*) INTERPOLATION=basic ;;
 	esac
-	# Mixage des canaux (shairport-sync refuse de démarrer sur une valeur
-	# inconnue : on retombe sur stéréo)
+	# Channel mix (shairport-sync refuses to start on an unknown value:
+	# fall back to stereo)
 	AUDIO_MODE=$(printf '%s' "$AUDIO_MODE" | tr 'A-Z' 'a-z')
 	case "$AUDIO_MODE" in
 		stereo)  PLAYBACK_MODE="stereo" ;;
@@ -150,7 +150,7 @@ start() {
 		right)   PLAYBACK_MODE="both right" ;;
 		reverse) PLAYBACK_MODE="reverse stereo" ;;
 		*)
-			log "AUDIO_MODE=\"$AUDIO_MODE\" inconnu, stéréo"
+			log "unknown AUDIO_MODE=\"$AUDIO_MODE\", using stereo"
 			AUDIO_MODE=stereo
 			PLAYBACK_MODE="stereo" ;;
 	esac
@@ -162,7 +162,7 @@ start() {
 	gen_shairport
 	gen_wpa
 	copy_ssh
-	log "nom \"$NAME\", hostname $HOSTNAME, audio $AUDIO_MODE"
+	log "name \"$NAME\", hostname $HOSTNAME, audio $AUDIO_MODE"
 }
 
 case "$1" in

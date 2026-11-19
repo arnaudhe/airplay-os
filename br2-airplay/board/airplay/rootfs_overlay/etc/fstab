@@ -3,7 +3,7 @@
 proc		/proc		proc	defaults				0	0
 sysfs		/sys		sysfs	defaults				0	0
 devpts		/dev/pts	devpts	defaults,gid=5,mode=620,ptmxmode=0666	0	0
-# /dev/shm : mémoire partagée entre nqptp et shairport-sync
+# /dev/shm: shared memory between nqptp and shairport-sync
 tmpfs		/dev/shm	tmpfs	mode=1777				0	0
 /dev/mmcblk0p1	/boot		vfat	ro,defaults				0	0
 tmpfs		/tmp		tmpfs	mode=1777,size=32m			0	0

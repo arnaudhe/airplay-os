@@ -3,7 +3,7 @@ config BR2_PACKAGE_AIRPLAY_WEB
 	depends on BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS
 	select BR2_PACKAGE_HOST_RUSTC
 	help
-	  Interface web en lecture seule (port 80) : état de l'enceinte
-	  AirPlay (audio, réseau, système, services, stockage, journal).
-	  Serveur Rust sans dépendance externe ; sources dans
-	  src/airplay-web de l'arbre BR2_EXTERNAL.
+	  Read-only web interface (port 80): status of the AirPlay
+	  speaker (audio, network, system, services, storage, log).
+	  Rust server with no external dependencies; sources in
+	  src/airplay-web of the BR2_EXTERNAL tree.

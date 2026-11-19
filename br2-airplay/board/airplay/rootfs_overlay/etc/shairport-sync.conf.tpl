@@ -1,7 +1,7 @@
-// Modèle de configuration shairport-sync.
-// /run/shairport-sync.conf est généré à chaque démarrage par
-// /etc/init.d/S01bootconf à partir de /boot/airplay.conf.
-// Ne pas modifier /run/shairport-sync.conf : il est recréé au boot.
+// shairport-sync configuration template.
+// /run/shairport-sync.conf is generated at every boot by
+// /etc/init.d/S01bootconf from /boot/airplay.conf.
+// Do not edit /run/shairport-sync.conf: it is recreated at boot.
 
 general =
 {

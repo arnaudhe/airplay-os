@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# run-airplay-web — lancé et relancé par init (/etc/inittab, action "respawn").
-# Interface web en lecture seule sur le port 80.
+# run-airplay-web — started and restarted by init (/etc/inittab, "respawn" action).
+# Read-only web interface on port 80.
 
 . /usr/libexec/airplay/respawn-guard
 respawn_guard airplay-web

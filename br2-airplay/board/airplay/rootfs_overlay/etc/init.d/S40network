@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# S40network — Ethernet (DHCP) et/ou Wi-Fi (wpa_supplicant + DHCP).
-# Remplace le S40network d'ifupdown fourni par Buildroot.
+# S40network — Ethernet (DHCP) and/or Wi-Fi (wpa_supplicant + DHCP).
+# Replaces the ifupdown S40network shipped by Buildroot.
 
 [ -r /run/airplay.env ] && . /run/airplay.env
 
 log() { echo "network: $*"; }
 
-# Attend qu'une interface apparaisse (pilotes chargés par udev)
+# Waits for an interface to appear (drivers loaded by udev)
 wait_iface() {
 	i=0
 	while [ ! -e "/sys/class/net/$1" ] && [ "$i" -lt "$2" ]; do
@@ -25,14 +25,14 @@ dhcp() {
 start() {
 	ip link set lo up
 
-	# eth0 (Pi 2 B) : contrôleur USB intégré, présent en quelques secondes
+	# eth0 (Pi 2 B): on-board USB controller, present within a few seconds
 	if wait_iface eth0 5; then
-		log "eth0 en DHCP"
+		log "eth0 via DHCP"
 		ip link set eth0 up
 		dhcp eth0
 	fi
 
-	# wlan0 (Pi 3 A+ ou dongle USB) : brcmfmac est un module chargé par udev
+	# wlan0 (Pi 3 A+ or USB dongle): brcmfmac is a module loaded by udev
 	if [ -n "$WIFI_SSID" ] && [ -r /run/wpa_supplicant.conf ]; then
 		if wait_iface wlan0 15; then
 			log "wlan0 -> \"$WIFI_SSID\""
@@ -40,14 +40,14 @@ start() {
 			ip link set wlan0 up
 			if ! wpa_supplicant -B -s -D nl80211 -i wlan0 \
 				-c /run/wpa_supplicant.conf -P /run/wpa_supplicant.pid; then
-				log "échec du lancement de wpa_supplicant"
-				logger -t network "échec du lancement de wpa_supplicant"
+				log "wpa_supplicant failed to start"
+				logger -t network "wpa_supplicant failed to start"
 			fi
-			# Économie d'énergie = pertes de paquets et décrochages audio
+			# Power saving = packet loss and audio dropouts
 			iw dev wlan0 set power_save off
 			dhcp wlan0
 		else
-			log "wlan0 introuvable"
+			log "wlan0 not found"
 		fi
 	fi
 }

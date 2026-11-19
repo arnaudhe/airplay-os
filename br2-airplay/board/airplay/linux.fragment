@@ -1,5 +1,5 @@
-# La racine est un squashfs : le pilote doit être intégré au noyau
-# (il est en module dans bcm2709_defconfig).
+# The root filesystem is squashfs: the driver must be built into the kernel
+# (it is a module in bcm2709_defconfig).
 CONFIG_SQUASHFS=y
 CONFIG_SQUASHFS_ZSTD=y
 CONFIG_SQUASHFS_XZ=y

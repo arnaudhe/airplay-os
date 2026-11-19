@@ -1,25 +1,25 @@
-//! Collecte de l'état du système, uniquement en lecture (/proc, /sys, /run,
-//! /boot et quelques commandes : ip, iw, amixer).
+//! Collects the system status, read-only (/proc, /sys, /run, /boot and a
+//! few commands: ip, iw, amixer).
 
 use crate::json::Json;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// Services surveillés : (nom du processus, libellé, indispensable)
+/// Monitored services: (process name, label, essential)
 const SERVICES: &[(&str, &str, bool)] = &[
     ("shairport-sync", "AirPlay (shairport-sync)", true),
-    ("nqptp", "Horloge PTP (nqptp)", true),
-    ("avahi-daemon", "Annonce mDNS (avahi)", true),
+    ("nqptp", "PTP clock (nqptp)", true),
+    ("avahi-daemon", "mDNS announcement (avahi)", true),
     ("dbus-daemon", "D-Bus", true),
     ("wpa_supplicant", "Wi-Fi (wpa_supplicant)", false),
-    ("udhcpc", "Client DHCP", false),
+    ("udhcpc", "DHCP client", false),
     ("dropbear", "SSH (dropbear)", false),
     ("udevd", "udev", false),
     ("syslogd", "syslog", false),
 ];
 
-/// Racine des fichiers lus : "/" sur le Pi, un faux arbre en développement.
+/// Root of the files read: "/" on the Pi, a fake tree during development.
 pub struct Sys {
     root: PathBuf,
 }
@@ -55,7 +55,7 @@ impl Sys {
         names
     }
 
-    /// Dernières lignes du journal système.
+    /// Last lines of the system log.
     pub fn logs(&self, max_lines: usize) -> String {
         let text = self.read("/var/log/messages").unwrap_or_default();
         let lines: Vec<&str> = text.lines().collect();
@@ -137,7 +137,7 @@ impl Sys {
         ])
     }
 
-    /// Alarme de sous-tension du pilote raspberrypi-hwmon ("rpi_volt").
+    /// Undervoltage alarm of the raspberrypi-hwmon driver ("rpi_volt").
     fn undervoltage(&self) -> Option<bool> {
         self.list_dir("/sys/class/hwmon").into_iter().find_map(|h| {
             let dir = format!("/sys/class/hwmon/{h}");
@@ -151,7 +151,7 @@ impl Sys {
     fn audio(&self, output_device: &str, mixer: &str, mode: &str) -> Json {
         let cards = parse_cards(&self.read("/proc/asound/cards").unwrap_or_default());
 
-        // Premier flux de lecture ouvert, toutes cartes confondues
+        // First open playback stream, across all cards
         let mut stream = Json::Null;
         let mut playing = false;
         'cards: for (index, _, _) in &cards {
@@ -278,7 +278,7 @@ impl Sys {
     }
 
     fn services(&self, uptime: Option<f64>) -> Json {
-        // nom du processus -> (pid, démarré depuis N secondes)
+        // process name -> (pid, running for N seconds)
         let mut found: Vec<(String, u32, Option<f64>)> = Vec::new();
         for pid in self.list_dir("/proc").into_iter().filter_map(|p| p.parse::<u32>().ok()) {
             let Some(comm) = self.read_trim(&format!("/proc/{pid}/comm")) else {
@@ -287,7 +287,7 @@ impl Sys {
             if !SERVICES.iter().any(|(name, _, _)| *name == comm) {
                 continue;
             }
-            // Champ 22 de /proc/<pid>/stat : démarrage, en ticks (USER_HZ = 100)
+            // Field 22 of /proc/<pid>/stat: start time, in ticks (USER_HZ = 100)
             let started = self.read(&format!("/proc/{pid}/stat")).and_then(|s| {
                 let after_comm = &s[s.rfind(')')? + 1..];
                 after_comm.split_whitespace().nth(19)?.parse::<f64>().ok()
@@ -303,7 +303,7 @@ impl Sys {
             SERVICES
                 .iter()
                 .map(|(name, label, essential)| {
-                    // Plusieurs processus (udhcpc par interface) : le plus ancien
+                    // Several processes (one udhcpc per interface): the oldest one
                     let proc = found
                         .iter()
                         .filter(|(c, _, _)| c == name)
@@ -324,7 +324,7 @@ impl Sys {
     fn storage(&self) -> Json {
         let mounts = self.read("/proc/mounts").unwrap_or_default();
         let mount = |target: &str| {
-            // Dernier montage sur ce point (celui qui est visible)
+            // Last mount on this point (the visible one)
             mounts
                 .lines()
                 .filter_map(|l| {
@@ -363,7 +363,7 @@ impl Sys {
         ])
     }
 
-    /// Lignes actives de config.txt (overlays, paramètres), avec leur section.
+    /// Active config.txt lines (overlays, parameters), with their section.
     fn boot_config(&self) -> Json {
         let text = self.read("/boot/config.txt").unwrap_or_default();
         let mut section = String::from("all");
@@ -382,7 +382,7 @@ impl Sys {
     }
 }
 
-/// Exécute une commande et renvoie sa sortie standard si elle réussit.
+/// Runs a command and returns its standard output if it succeeds.
 fn run(cmd: &str, args: &[&str]) -> Option<String> {
     let out = Command::new(cmd).args(args).output().ok()?;
     out.status
@@ -390,7 +390,7 @@ fn run(cmd: &str, args: &[&str]) -> Option<String> {
         .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
-/// Valeur d'une ligne "clé: valeur".
+/// Value of a "key: value" line.
 fn field(text: &str, key: &str) -> Option<String> {
     text.lines().find_map(|l| {
         let (k, v) = l.split_once(':')?;
@@ -398,7 +398,7 @@ fn field(text: &str, key: &str) -> Option<String> {
     })
 }
 
-/// Lit /run/airplay.env (lignes CLE='valeur' produites par S01bootconf).
+/// Reads /run/airplay.env (KEY='value' lines written by S01bootconf).
 pub fn parse_env(text: &str) -> Vec<(String, String)> {
     text.lines()
         .filter_map(|l| {
@@ -408,7 +408,7 @@ pub fn parse_env(text: &str) -> Vec<(String, String)> {
         .collect()
 }
 
-/// Défait le quoting shell 'abc'\''def' utilisé dans airplay.env.
+/// Undoes the 'abc'\''def' shell quoting used in airplay.env.
 fn shell_unquote(s: &str) -> String {
     let mut out = String::new();
     let mut quoted = false;
@@ -427,7 +427,7 @@ fn shell_unquote(s: &str) -> String {
     out
 }
 
-/// /proc/asound/cards -> (index, id, nom)
+/// /proc/asound/cards -> (index, id, name)
 fn parse_cards(text: &str) -> Vec<(u32, String, String)> {
     text.lines()
         .filter_map(|l| {
@@ -444,7 +444,7 @@ fn parse_cards(text: &str) -> Vec<(u32, String, String)> {
         .collect()
 }
 
-/// "hw:0", "plughw:CARD=IQaudIODAC,DEV=0", "default" -> carte pour amixer -c
+/// "hw:0", "plughw:CARD=IQaudIODAC,DEV=0", "default" -> card for amixer -c
 fn alsa_card(device: &str) -> String {
     device
         .split_once(':')
@@ -456,7 +456,7 @@ fn alsa_card(device: &str) -> String {
         .unwrap_or_else(|| "0".to_string())
 }
 
-/// Premier "[NN%]" et "[-12.50dB]" de la sortie de amixer sget.
+/// First "[NN%]" and "[-12.50dB]" in the output of amixer sget.
 fn parse_amixer(out: &str) -> (Option<f64>, Option<f64>) {
     let mut percent = None;
     let mut db = None;
@@ -494,8 +494,8 @@ mod tests {
 
     #[test]
     fn env_unquote() {
-        let env = parse_env("NAME='Chez l'\\''ami'\nMIXER=''\n");
-        assert_eq!(env[0], ("NAME".into(), "Chez l'ami".into()));
+        let env = parse_env("NAME='Bob'\\''s room'\nMIXER=''\n");
+        assert_eq!(env[0], ("NAME".into(), "Bob's room".into()));
         assert_eq!(env[1], ("MIXER".into(), "".into()));
     }
 
@@ -521,10 +521,10 @@ mod tests {
 
     #[test]
     fn iw_link() {
-        let out = "Connected to aa:bb:cc:dd:ee:ff (on wlan0)\n\tSSID: Maison\n\tfreq: 5180\n\tsignal: -57 dBm\n\ttx bitrate: 433.3 MBit/s VHT-MCS 9\n";
+        let out = "Connected to aa:bb:cc:dd:ee:ff (on wlan0)\n\tSSID: Home\n\tfreq: 5180\n\tsignal: -57 dBm\n\ttx bitrate: 433.3 MBit/s VHT-MCS 9\n";
         assert_eq!(
             parse_iw_link(out).to_string(),
-            r#"{"connected":true,"ssid":"Maison","freq_mhz":5180,"signal_dbm":-57,"tx_mbps":433.3}"#
+            r#"{"connected":true,"ssid":"Home","freq_mhz":5180,"signal_dbm":-57,"tx_mbps":433.3}"#
         );
         assert_eq!(parse_iw_link("Not connected.\n").to_string(), r#"{"connected":false}"#);
     }

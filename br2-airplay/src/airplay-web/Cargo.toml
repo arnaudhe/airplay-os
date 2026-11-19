@@ -3,12 +3,12 @@ name = "airplay-web"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.88"
-description = "Interface web en lecture seule : état d'une enceinte AirPlay 2"
+description = "Read-only web interface: status of an AirPlay 2 speaker"
 license = "MIT"
 publish = false
 
-# Aucune dépendance externe : le paquet Buildroot compile hors ligne
-# (cargo --offline --locked) sans rien à télécharger.
+# No external dependencies: the Buildroot package builds offline
+# (cargo --offline --locked) with nothing to download.
 [dependencies]
 
 [profile.release]

@@ -1,13 +1,13 @@
 #!/bin/sh
-# build.sh — construit sdcard.img dans Docker (à lancer depuis la racine du dépôt).
+# build.sh — builds sdcard.img in Docker (run from the repository root).
 #
-#   ./scripts/build.sh            build complet (ou incrémental), copie sdcard.img ici
-#   ./scripts/build.sh shell      shell dans le conteneur, dans /work/buildroot
-#   ./scripts/build.sh <cible>    ex. : menuconfig, linux-menuconfig, savedefconfig,
-#                                       shairport-sync-rebuild, clean
+#   ./scripts/build.sh            full (or incremental) build, copies sdcard.img here
+#   ./scripts/build.sh shell      shell in the container, in /work/buildroot
+#   ./scripts/build.sh <target>   e.g. menuconfig, linux-menuconfig, savedefconfig,
+#                                      shairport-sync-rebuild, clean
 #
-# Le build vit dans le volume Docker "br-work" (système de fichiers sensible à
-# la casse) ; seul l'arbre BR2_EXTERNAL du dépôt est monté depuis le Mac.
+# The build lives in the "br-work" Docker volume (case-sensitive filesystem);
+# only the repository's BR2_EXTERNAL tree is mounted from the Mac.
 set -eu
 
 BUILDROOT_VERSION="${BUILDROOT_VERSION:-2026.02.3}"
@@ -45,7 +45,7 @@ case "${1:-all}" in
 make -j\$(nproc)"
 		docker run --rm -v "$VOLUME":/work -v "$REPO":/out "$IMAGE" \
 			cp /work/buildroot/output/images/sdcard.img /out/
-		echo "Image : $REPO/sdcard.img"
+		echo "Image: $REPO/sdcard.img"
 		;;
 	defconfig)
 		run "$PREPARE

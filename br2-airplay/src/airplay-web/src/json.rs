@@ -1,8 +1,8 @@
-//! Construction minimale de JSON (sans dépendance externe).
+//! Minimal JSON builder (no external dependency).
 
 use std::fmt::{self, Write};
 
-/// Valeur JSON.
+/// A JSON value.
 pub enum Json {
     Null,
     Bool(bool),
@@ -17,7 +17,7 @@ impl Json {
         Json::Str(s.into())
     }
 
-    /// `Some(v)` -> valeur, `None` -> `null`.
+    /// `Some(v)` -> value, `None` -> `null`.
     pub fn opt<T>(v: Option<T>, f: impl FnOnce(T) -> Json) -> Json {
         v.map(f).unwrap_or(Json::Null)
     }
@@ -74,8 +74,8 @@ fn write_str(out: &mut String, s: &str) {
             '\n' => out.push_str("\\n"),
             '\r' => out.push_str("\\r"),
             '\t' => out.push_str("\\t"),
-            // "<" échappé : le JSON ne peut pas fermer une balise s'il est
-            // un jour inclus dans du HTML
+            // "<" is escaped so the JSON can never close a tag if it is
+            // ever embedded in HTML
             '<' => out.push_str("\\u003c"),
             c if (c as u32) < 0x20 => {
                 let _ = write!(out, "\\u{:04x}", c as u32);
