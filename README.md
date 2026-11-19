@@ -66,6 +66,67 @@ Après une modification du defconfig, réappliquer la configuration avec
 `./scripts/build.sh defconfig`. Les commandes manuelles équivalentes sont dans
 la section 8 des spécifications.
 
+## Construire l'image sur Linux (sans Docker)
+
+Sur une machine Linux x86_64 ou arm64, Buildroot se lance directement. Prévoir
+~40 Go de disque libre et un utilisateur **non-root**.
+
+### Dépendances
+
+Debian / Ubuntu :
+
+```bash
+sudo apt-get install -y build-essential gcc g++ make patch perl python3 file wget ca-certificates cpio unzip rsync bc git libncurses-dev bzip2 xz-utils gzip diffutils findutils sed bash
+```
+
+Fedora :
+
+```bash
+sudo dnf install -y gcc gcc-c++ make patch perl python3 file wget which cpio unzip rsync bc git ncurses-devel bzip2 xz gzip diffutils findutils sed bash perl-FindBin perl-IPC-Cmd perl-English perl-Thread-Queue
+```
+
+### Build
+
+Depuis la racine de ce dépôt, Buildroot étant cloné à côté :
+
+```bash
+git clone https://gitlab.com/buildroot.org/buildroot.git ../buildroot
+```
+
+```bash
+git -C ../buildroot checkout 2026.02.3
+```
+
+```bash
+make -C ../buildroot BR2_EXTERNAL="$PWD/br2-airplay" airplay_rpi_armv7_defconfig
+```
+
+```bash
+make -C ../buildroot -j"$(nproc)"
+```
+
+L'image est produite dans `../buildroot/output/images/sdcard.img`.
+`BR2_EXTERNAL` est mémorisé dans `output/` : les `make` suivants (par exemple
+`make -C ../buildroot menuconfig`, puis `savedefconfig` pour réécrire le
+defconfig du dépôt) n'en ont plus besoin. Le cache ccache est placé à côté
+de Buildroot, dans `../.buildroot-ccache`, et les sources téléchargées dans
+`../buildroot/dl/`.
+
+Remarques :
+- la variable `PATH` ne doit contenir ni espace ni répertoire relatif (`.`) ;
+  Buildroot refuse de démarrer sinon ;
+- la variable `LD_LIBRARY_PATH` doit être vide (`unset LD_LIBRARY_PATH`) ;
+- ne pas lancer le build en root.
+
+### Flasher depuis Linux
+
+Identifier la carte SD avec `lsblk` (ici `/dev/sdX`, à adapter : **toutes les
+données du périphérique sont effacées**) :
+
+```bash
+sudo dd if=../buildroot/output/images/sdcard.img of=/dev/sdX bs=4M conv=fsync status=progress
+```
+
 ## Flasher et configurer une enceinte
 
 1. Flasher `sdcard.img` (balenaEtcher, ou `dd` vers `/dev/rdiskN`).
