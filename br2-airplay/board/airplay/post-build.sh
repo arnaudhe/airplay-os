@@ -29,6 +29,12 @@ fi
 rm -f "${TARGET_DIR}/etc/init.d/S90nqptp" \
       "${TARGET_DIR}/etc/init.d/S99shairport-sync"
 
+# Anciens scripts de l'overlay (avant la supervision par init). Buildroot ne
+# supprime jamais rien de output/target : sans ce nettoyage, un build
+# incrémental les garderait et lancerait nqptp et shairport-sync en double.
+rm -f "${TARGET_DIR}/etc/init.d/S49nqptp" \
+      "${TARGET_DIR}/etc/init.d/S50shairport"
+
 # Services supervisés : BusyBox init les lance une fois rcS terminé (réseau,
 # dbus, avahi prêts) et les relance s'ils s'arrêtent.
 INITTAB="${TARGET_DIR}/etc/inittab"
