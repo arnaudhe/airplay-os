@@ -9,6 +9,7 @@ general =
 	output_backend = "alsa";
 	mdns_backend = "avahi";
 	interpolation = "@INTERPOLATION@";
+	playback_mode = "@PLAYBACK_MODE@";
 };
 
 alsa =

@@ -33,6 +33,7 @@ load_conf() {
 	OUTPUT_DEVICE="hw:0"
 	MIXER="Digital"
 	INTERPOLATION="basic"
+	AUDIO_MODE="stereo"
 	AMIXER_CMDS=""
 
 	if [ ! -r "$BOOT_CONF" ]; then
@@ -62,7 +63,7 @@ make_hostname() {
 write_env() {
 	{
 		for v in NAME HOSTNAME WIFI_SSID WIFI_COUNTRY OUTPUT_DEVICE \
-			 MIXER INTERPOLATION AMIXER_CMDS; do
+			 MIXER INTERPOLATION AUDIO_MODE AMIXER_CMDS; do
 			eval "val=\$$v"
 			printf '%s=%s\n' "$v" "$(shell_quote "$val")"
 		done
@@ -77,6 +78,7 @@ gen_shairport() {
 	    -e "s|@OUTPUT_DEVICE@|$(sed_escape "$(cfg_escape "$OUTPUT_DEVICE")")|" \
 	    -e "s|@MIXER@|$(sed_escape "$(cfg_escape "$MIXER")")|" \
 	    -e "s|@INTERPOLATION@|$INTERPOLATION|" \
+	    -e "s|@PLAYBACK_MODE@|$PLAYBACK_MODE|" \
 	    "$TPL" > /run/shairport-sync.conf
 }
 
@@ -139,6 +141,20 @@ start() {
 		basic|auto|soxr) ;;
 		*) INTERPOLATION=basic ;;
 	esac
+	# Mixage des canaux (shairport-sync refuse de démarrer sur une valeur
+	# inconnue : on retombe sur stéréo)
+	AUDIO_MODE=$(printf '%s' "$AUDIO_MODE" | tr 'A-Z' 'a-z')
+	case "$AUDIO_MODE" in
+		stereo)  PLAYBACK_MODE="stereo" ;;
+		mono)    PLAYBACK_MODE="mono" ;;
+		left)    PLAYBACK_MODE="both left" ;;
+		right)   PLAYBACK_MODE="both right" ;;
+		reverse) PLAYBACK_MODE="reverse stereo" ;;
+		*)
+			log "AUDIO_MODE=\"$AUDIO_MODE\" inconnu, stéréo"
+			AUDIO_MODE=stereo
+			PLAYBACK_MODE="stereo" ;;
+	esac
 	[ -n "$NAME" ] || NAME="AirPlay"
 	HOSTNAME=$(make_hostname "${HOSTNAME:-$NAME}")
 
@@ -147,7 +163,7 @@ start() {
 	gen_shairport
 	gen_wpa
 	copy_ssh
-	log "nom \"$NAME\", hostname $HOSTNAME"
+	log "nom \"$NAME\", hostname $HOSTNAME, audio $AUDIO_MODE"
 }
 
 case "$1" in

@@ -134,9 +134,25 @@ sudo dd if=../buildroot/output/images/sdcard.img of=/dev/sdX bs=4M conv=fsync st
    - `config.txt` : garder **une seule** ligne `dtoverlay=` correspondant au HAT
      (par défaut `iqaudio-dacplus,unmute_amp` pour le DigiAMP+) ;
    - `airplay.conf` : `NAME`, Wi-Fi (`WIFI_SSID`, `WIFI_PSK`, `WIFI_COUNTRY`),
-     `OUTPUT_DEVICE`, `MIXER` ;
+     `OUTPUT_DEVICE`, `MIXER`, `AUDIO_MODE` ;
    - facultatif : `authorized_keys` (clés publiques SSH pour `root`).
 3. Éjecter proprement la carte (seul moment où la partition boot est écrite).
+
+### Enceinte à un seul haut-parleur
+
+`AUDIO_MODE` dans `airplay.conf` choisit le mixage des canaux, appliqué par
+shairport-sync (`playback_mode`) avant le volume matériel :
+
+| `AUDIO_MODE` | Sortie gauche | Sortie droite | Usage |
+|---|---|---|---|
+| `stereo` (défaut) | G | D | deux haut-parleurs |
+| `mono` | (G+D)/2 | (G+D)/2 | un seul HP, branché d'un côté ou de l'autre |
+| `left` | G | G | ne diffuser que le canal gauche |
+| `right` | D | D | ne diffuser que le canal droit |
+| `reverse` | D | G | haut-parleurs câblés à l'envers |
+
+Une valeur inconnue retombe sur `stereo` (shairport-sync refuserait sinon de
+démarrer).
 
 Le hostname est déduit de `NAME` (`Salon` → `salon.local`) ; le définir avec
 `HOSTNAME=` si le nom contient des accents.
