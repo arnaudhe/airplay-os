@@ -38,8 +38,11 @@ start() {
 			log "wlan0 -> \"$WIFI_SSID\""
 			iw reg set "${WIFI_COUNTRY:-FR}" 2>/dev/null
 			ip link set wlan0 up
-			wpa_supplicant -B -s -D nl80211 -i wlan0 \
-				-c /run/wpa_supplicant.conf -P /run/wpa_supplicant.pid
+			if ! wpa_supplicant -B -s -D nl80211 -i wlan0 \
+				-c /run/wpa_supplicant.conf -P /run/wpa_supplicant.pid; then
+				log "échec du lancement de wpa_supplicant"
+				logger -t network "échec du lancement de wpa_supplicant"
+			fi
 			# Économie d'énergie = pertes de paquets et décrochages audio
 			iw dev wlan0 set power_save off
 			dhcp wlan0

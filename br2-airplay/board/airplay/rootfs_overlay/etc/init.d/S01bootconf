@@ -106,7 +106,6 @@ gen_wpa() {
 	(
 		umask 077
 		cat > /run/wpa_supplicant.conf <<-WPA
-		ctrl_interface=/run/wpa_supplicant
 		country=$WIFI_COUNTRY
 		ap_scan=1
 
