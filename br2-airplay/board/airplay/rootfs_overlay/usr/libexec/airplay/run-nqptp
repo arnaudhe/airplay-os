@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# run-nqptp — lancé et relancé par init (/etc/inittab, action "respawn").
+# Horloge PTP pour la synchronisation multiroom AirPlay 2 : root obligatoire
+# (ports UDP 319/320). Reste au premier plan : init le relance s'il s'arrête.
+
+. /usr/libexec/airplay/respawn-guard
+respawn_guard nqptp
+
+exec /usr/bin/nqptp

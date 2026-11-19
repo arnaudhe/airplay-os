@@ -24,7 +24,16 @@ if [ -L "${TARGET_DIR}/var/log" ]; then
 	mkdir -p "${TARGET_DIR}/var/log"
 fi
 
-# Les paquets installent leurs propres scripts d'init : on les remplace par
-# S49nqptp et S50shairport (overlay) pour maîtriser l'ordre de démarrage.
+# Les paquets installent leurs propres scripts d'init : nqptp et
+# shairport-sync sont lancés et supervisés par init (inittab ci-dessous).
 rm -f "${TARGET_DIR}/etc/init.d/S90nqptp" \
       "${TARGET_DIR}/etc/init.d/S99shairport-sync"
+
+# Services supervisés : BusyBox init les lance une fois rcS terminé (réseau,
+# dbus, avahi prêts) et les relance s'ils s'arrêtent.
+INITTAB="${TARGET_DIR}/etc/inittab"
+sed -i '/# airplay-respawn$/d' "${INITTAB}"
+cat >> "${INITTAB}" <<'INITTAB_EOF'
+::respawn:/usr/libexec/airplay/run-nqptp # airplay-respawn
+::respawn:/usr/libexec/airplay/run-shairport # airplay-respawn
+INITTAB_EOF

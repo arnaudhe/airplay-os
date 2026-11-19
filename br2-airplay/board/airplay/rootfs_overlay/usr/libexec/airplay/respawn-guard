@@ -1,0 +1,26 @@
+# respawn-guard — inclus par les scripts run-* lancés par init.
+#
+# BusyBox init relance immédiatement un service qui s'arrête. Pour éviter de
+# boucler à pleine vitesse sur un service qui plante au démarrage, on attend
+# avant chaque relance, de plus en plus longtemps (2, 4, 8… jusqu'à 60 s).
+# Le délai revient à 2 s quand le service a tenu plus de 5 minutes.
+
+respawn_guard() {
+	state="/run/respawn.$1"
+	now=$(cut -d. -f1 /proc/uptime)
+	if [ -r "$state" ]; then
+		read -r last delay < "$state"
+		if [ $((now - last)) -gt 300 ]; then
+			delay=2
+		else
+			delay=$((delay * 2))
+			[ "$delay" -gt 60 ] && delay=60
+		fi
+		logger -t "$1" "relance dans ${delay} s"
+		sleep "$delay"
+		now=$(cut -d. -f1 /proc/uptime)
+	else
+		delay=1
+	fi
+	echo "$now $delay" > "$state"
+}

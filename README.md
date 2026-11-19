@@ -27,10 +27,11 @@ br2-airplay/                arbre BR2_EXTERNAL
 │   ├── genimage.cfg        boot FAT (64 Mo) + rootfs.squashfs
 │   ├── post-build.sh       liens /etc -> /run, /var/log en tmpfs
 │   ├── post-image.sh       airplay.conf + genimage
-│   └── rootfs_overlay/etc/
-│       ├── fstab
-│       ├── shairport-sync.conf.tpl
-│       └── init.d/S01bootconf S40network S49nqptp S50shairport
+│   └── rootfs_overlay/
+│       ├── etc/fstab
+│       ├── etc/shairport-sync.conf.tpl
+│       ├── etc/init.d/S01bootconf S40network
+│       └── usr/libexec/airplay/run-nqptp run-shairport respawn-guard
 └── package/                paquets additionnels (vide)
 ```
 
@@ -171,6 +172,8 @@ ssh root@salon.local
 - Logs : `/var/log/messages` (tmpfs, perdu au redémarrage).
 - Configs générées : `/run/airplay.env`, `/run/shairport-sync.conf`,
   `/run/wpa_supplicant.conf`.
+- Relancer shairport-sync (après avoir modifié `/run/shairport-sync.conf` pour
+  un essai, par exemple) : `killall shairport-sync` ; init le redémarre.
 
 ## Séquence de démarrage
 
@@ -180,14 +183,26 @@ ssh root@salon.local
 | `S10udevd` | eudev : charge les modules du HAT et du Wi-Fi |
 | `S30dbus` | |
 | `S40network` | eth0 en DHCP ; wlan0 via wpa_supplicant + DHCP, `power_save off` |
-| `S49nqptp` | horloge PTP (UDP 319/320, root) |
 | `S50avahi-daemon` | annonce mDNS |
 | `S50dropbear` | SSH |
-| `S50shairport` | attend la carte son, applique `AMIXER_CMDS`, lance shairport-sync |
+
+Une fois `rcS` terminé, BusyBox init lance les services supervisés déclarés
+dans `/etc/inittab` (action `respawn`, ajoutée par `post-build.sh`) et les
+relance s'ils s'arrêtent :
+
+| Service | Script | Rôle |
+|---|---|---|
+| nqptp | `run-nqptp` | horloge PTP (UDP 319/320, root) |
+| shairport-sync | `run-shairport` | attend la carte son, applique `AMIXER_CMDS`, lance shairport-sync au premier plan |
+
+Pour ne pas boucler sur un service qui plante dès son lancement,
+`respawn-guard` attend avant chaque relance : 2 s, puis 4, 8… jusqu'à 60 s. Le
+délai revient à 2 s quand le service a tenu plus de 5 minutes. Les relances
+sont tracées dans `/var/log/messages`.
 
 ## Écarts et précisions par rapport aux spécifications
 
-- **Réglages `amixer`** : appliqués par `S50shairport` et non par
+- **Réglages `amixer`** : appliqués par `run-shairport` et non par
   `S01bootconf`, car la carte son n'existe qu'une fois les modules chargés par
   udev (S10).
 - **Réseau** : script `S40network` dédié, qui remplace ifupdown (une seule
@@ -196,9 +211,10 @@ ssh root@salon.local
   `/dev/shm` (mémoire partagée indispensable entre nqptp et shairport-sync).
   `/var/log`, qui est un lien vers `/tmp` dans le squelette Buildroot, devient
   un vrai répertoire pour y monter son tmpfs.
-- **Init des paquets** : `S90nqptp` et `S99shairport-sync` installés par
-  Buildroot sont supprimés au post-build au profit de `S49nqptp` et
-  `S50shairport`.
+- **Supervision** : nqptp et shairport-sync ne sont pas lancés par des
+  scripts `S49nqptp`/`S50shairport` mais par init (`inittab`, `respawn`), qui
+  les relance en cas d'arrêt. `S90nqptp` et `S99shairport-sync` installés par
+  Buildroot sont supprimés au post-build.
 - **Bluetooth** coupé sur Pi 3 (`dtoverlay=disable-bt`) : il partage l'antenne
   du CYW43455.
 - `config.txt` et `cmdline.txt` sont installés par le paquet `rpi-firmware`
