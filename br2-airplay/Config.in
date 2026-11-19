@@ -1,0 +1,5 @@
+# Paquets additionnels (vides pour l'instant : shairport-sync 4.3.7 avec
+# AirPlay 2 et nqptp 1.2.4 sont fournis par Buildroot 2026.02.x).
+# Pour ajouter un paquet : package/<nom>/Config.in + package/<nom>/<nom>.mk,
+# puis une ligne :
+#   source "$BR2_EXTERNAL_AIRPLAY_PATH/package/<nom>/Config.in"

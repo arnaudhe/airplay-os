@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# S50shairport — récepteur AirPlay 2 (configuration : /run/shairport-sync.conf).
+
+DAEMON="shairport-sync"
+PIDFILE="/run/$DAEMON.pid"
+
+[ -r /run/airplay.env ] && . /run/airplay.env
+
+# Le pilote du HAT est chargé par udev : attendre la carte son
+wait_soundcard() {
+	i=0
+	while ! grep -q '^ *[0-9]' /proc/asound/cards 2>/dev/null; do
+		[ "$i" -ge 20 ] && return 1
+		sleep 1
+		i=$((i + 1))
+	done
+}
+
+# Réglages ALSA non persistants (alsactl store impossible en lecture seule)
+apply_amixer() {
+	[ -n "$AMIXER_CMDS" ] || return 0
+	printf '%s\n' "$AMIXER_CMDS" | tr ';' '\n' | while read -r cmd; do
+		[ -n "$cmd" ] || continue
+		eval "amixer -q $cmd" || echo "amixer $cmd : échec"
+	done
+}
+
+start() {
+	if ! wait_soundcard; then
+		echo "$DAEMON: aucune carte son (vérifier dtoverlay dans config.txt)"
+	fi
+	apply_amixer
+
+	printf 'Starting %s: ' "$DAEMON"
+	start-stop-daemon --start --background --make-pidfile \
+		--pidfile "$PIDFILE" --exec "/usr/bin/$DAEMON" \
+		-- -c /etc/shairport-sync.conf
+	status=$?
+	[ "$status" -eq 0 ] && echo "OK" || echo "FAIL"
+	return "$status"
+}
+
+stop() {
+	printf 'Stopping %s: ' "$DAEMON"
+	start-stop-daemon --stop --pidfile "$PIDFILE" --exec "/usr/bin/$DAEMON"
+	status=$?
+	[ "$status" -eq 0 ] && echo "OK" || echo "FAIL"
+	rm -f "$PIDFILE"
+	return "$status"
+}
+
+case "$1" in
+	start|stop) "$1";;
+	restart|reload) stop; sleep 1; start;;
+	*)
+		echo "Usage: $0 {start|stop|restart|reload}"
+		exit 1
+esac
