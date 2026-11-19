@@ -37,3 +37,6 @@ cat >> "${INITTAB}" <<'INITTAB_EOF'
 ::respawn:/usr/libexec/airplay/run-nqptp # airplay-respawn
 ::respawn:/usr/libexec/airplay/run-shairport # airplay-respawn
 INITTAB_EOF
+if [ -x "${TARGET_DIR}/usr/libexec/airplay/run-airplay-web" ]; then
+	echo '::respawn:/usr/libexec/airplay/run-airplay-web # airplay-respawn' >> "${INITTAB}"
+fi

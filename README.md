@@ -17,6 +17,7 @@ nqptp 1.2.4 fournis par Buildroot, noyau Raspberry Pi 6.12.
 ```
 Dockerfile                  environnement de build (Debian bookworm, arm64 natif)
 scripts/build.sh            build dans Docker + récupération de sdcard.img
+docs/                       captures d'écran
 br2-airplay/                arbre BR2_EXTERNAL
 ├── configs/airplay_rpi_armv7_defconfig
 ├── board/airplay/
@@ -32,7 +33,8 @@ br2-airplay/                arbre BR2_EXTERNAL
 │       ├── etc/shairport-sync.conf.tpl
 │       ├── etc/init.d/S01bootconf S40network
 │       └── usr/libexec/airplay/run-nqptp run-shairport respawn-guard
-└── package/                paquets additionnels (vide)
+├── package/airplay-web/    paquet Buildroot de l'interface web
+└── src/airplay-web/        sources Rust de l'interface web
 ```
 
 ## Construire l'image (macOS + Docker)
@@ -175,6 +177,53 @@ ssh root@salon.local
 - Relancer shairport-sync (après avoir modifié `/run/shairport-sync.conf` pour
   un essai, par exemple) : `killall shairport-sync` ; init le redémarre.
 
+## Interface web (lecture seule)
+
+Chaque enceinte affiche son état sur **`http://<hostname>.local`** (par
+exemple `http://salon.local`). Le service est annoncé en mDNS (`_http._tcp`)
+et la page se met à jour toutes les 3 s. Elle fonctionne en thème clair ou
+sombre et s'adapte au téléphone.
+
+![Interface web](docs/airplay-web.png)
+
+- **Audio** : volume du mixer matériel, carte son, mixage (`AUDIO_MODE`), flux
+  en cours (fréquence, format), indicateur « En lecture ».
+- **Réseau** : IP, et pour le Wi-Fi le SSID, le signal, la bande et le canal
+  ainsi que le débit.
+- **Système** : uptime, charge, fréquence CPU, température, mémoire, alarme de
+  **sous-tension** (pilote `raspberrypi-hwmon`).
+- **Services** : processus attendus et depuis quand ils tournent (une relance
+  récente se voit immédiatement).
+- **Stockage** : `/` et `/boot` en lecture seule, nombre d'écritures sur la
+  carte SD depuis le démarrage (critère de validation de la section 10).
+- **Configuration** : valeurs de `/run/airplay.env` et lignes actives de
+  `config.txt`.
+- **Journal** : fin de `/var/log/messages`.
+
+Rien n'est jamais écrit (seules les requêtes `GET`/`HEAD` sont acceptées) et le
+mot de passe Wi-Fi n'est pas exposé. Il n'y a pas d'authentification : la page
+est visible par tout le réseau local.
+
+Le serveur (`src/airplay-web`) est écrit en Rust **sans aucune dépendance
+externe** : le paquet se compile hors ligne avec le Rust précompilé de
+Buildroot, et le binaire fait environ 500 Ko. HTML, CSS et JS sont intégrés au
+binaire, sans police ni ressource externe. Il est lancé et supervisé par init
+comme nqptp et shairport-sync. Pour le retirer de l'image :
+`# BR2_PACKAGE_AIRPLAY_WEB is not set`.
+
+Développement sur un poste Linux, sans Pi :
+
+```bash
+cd br2-airplay/src/airplay-web && cargo test
+```
+
+```bash
+AIRPLAY_WEB_LISTEN=127.0.0.1:8080 cargo run
+```
+
+`AIRPLAY_WEB_ROOT=/chemin/vers/un/faux/arbre` permet de lire `/proc`, `/sys`,
+`/run` et `/boot` depuis un autre dossier, pour simuler une enceinte.
+
 ## Séquence de démarrage
 
 | Script | Rôle |
@@ -194,6 +243,7 @@ relance s'ils s'arrêtent :
 |---|---|---|
 | nqptp | `run-nqptp` | horloge PTP (UDP 319/320, root) |
 | shairport-sync | `run-shairport` | attend la carte son, applique `AMIXER_CMDS`, lance shairport-sync au premier plan |
+| airplay-web | `run-airplay-web` | interface web en lecture seule, port 80 |
 
 Pour ne pas boucler sur un service qui plante dès son lancement,
 `respawn-guard` attend avant chaque relance : 2 s, puis 4, 8… jusqu'à 60 s. Le
@@ -215,6 +265,8 @@ sont tracées dans `/var/log/messages`.
   scripts `S49nqptp`/`S50shairport` mais par init (`inittab`, `respawn`), qui
   les relance en cas d'arrêt. `S90nqptp` et `S99shairport-sync` installés par
   Buildroot sont supprimés au post-build.
+- **Interface web** : la section 2 l'excluait. Celle-ci est en lecture seule et
+  peut être retirée de l'image d'une ligne dans le defconfig.
 - **Bluetooth** coupé sur Pi 3 (`dtoverlay=disable-bt`) : il partage l'antenne
   du CYW43455.
 - `config.txt` et `cmdline.txt` sont installés par le paquet `rpi-firmware`

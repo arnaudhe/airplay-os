@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Enceinte AirPlay</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b5bd6'/%3E%3Cpath d='M9 13h4l5-4v14l-5-4H9z' fill='white'/%3E%3Cpath d='M21 12a5 5 0 0 1 0 8' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f4f4f8;
+  --card: #ffffff;
+  --text: #1c1c28;
+  --muted: #6b6b80;
+  --line: #e6e6ef;
+  --accent: #5b5bd6;
+  --accent-2: #9b51e0;
+  --ok: #1f9d6a;
+  --warn: #d98a00;
+  --bad: #d64545;
+  --track: #ececf4;
+  --shadow: 0 1px 2px rgb(20 20 40 / 0.04), 0 8px 24px rgb(20 20 40 / 0.06);
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f17;
+    --card: #191924;
+    --text: #ececf4;
+    --muted: #9a9ab0;
+    --line: #2a2a3a;
+    --accent: #8484f0;
+    --accent-2: #b67cf0;
+    --ok: #3fc48f;
+    --warn: #f0b03a;
+    --bad: #f06a6a;
+    --track: #2a2a3a;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 40px; }
+
+/* --- En-tête --- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.08);
+}
+.hero .icon {
+  flex: none;
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.18);
+  display: grid; place-items: center;
+}
+.hero h1 { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.hero .sub { opacity: 0.85; font-size: 14px; margin-top: 2px; overflow-wrap: anywhere; }
+.hero .who { flex: 1; min-width: 180px; position: relative; z-index: 1; }
+.pill {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  font-weight: 600; font-size: 14px;
+  white-space: nowrap;
+}
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.eq i { width: 3px; height: 4px; border-radius: 2px; background: #fff; }
+.playing .eq i { animation: eq 0.9s ease-in-out infinite; }
+.playing .eq i:nth-child(2) { animation-delay: -0.3s; }
+.playing .eq i:nth-child(3) { animation-delay: -0.6s; }
+.playing .eq i:nth-child(4) { animation-delay: -0.15s; }
+@keyframes eq { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+@media (prefers-reduced-motion: reduce) { .playing .eq i { animation: none; height: 10px; } }
+
+/* --- Bandeau d'alerte --- */
+.alert {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--bad) 14%, var(--card));
+  color: var(--bad);
+  border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent);
+}
+.alert.show { display: block; }
+
+/* --- Cartes --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.card h2 svg { width: 16px; height: 16px; color: var(--accent); }
+.card.wide { grid-column: 1 / -1; }
+
+.row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+.row:first-of-type { border-top: 0; padding-top: 0; }
+.row .k { color: var(--muted); flex: none; }
+.row .v { text-align: right; font-weight: 550; overflow-wrap: anywhere; min-width: 0; }
+.mono { font-family: var(--mono); font-size: 13px; }
+
+.meter { margin: 4px 0 10px; }
+.meter .top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+.meter .top span:first-child { color: var(--muted); }
+.meter .top span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.bar > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.6s ease;
+}
+.bar.warn > div { background: var(--warn); }
+.bar.bad > div { background: var(--bad); }
+
+.big { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.big small { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.stat { background: var(--bg); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.stat .l { font-size: 12px; color: var(--muted); }
+.stat .n { font-size: 18px; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--muted); }
+.dot.ok { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent); }
+.dot.warn { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 20%, transparent); }
+.dot.bad { background: var(--bad); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 20%, transparent); }
+
+.svc { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.svc:first-of-type { border-top: 0; padding-top: 0; }
+.svc .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.svc .age { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+.tag.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.tag.bad { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+
+.signal { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; margin-right: 6px; vertical-align: -1px; }
+.signal i { width: 4px; border-radius: 1px; background: var(--track); }
+.signal i:nth-child(1) { height: 25%; } .signal i:nth-child(2) { height: 50%; }
+.signal i:nth-child(3) { height: 75%; } .signal i:nth-child(4) { height: 100%; }
+.signal i.on { background: var(--ok); }
+
+.iface + .iface { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.iface-head { display: flex; align-items: center; gap: 8px; font-weight: 650; margin-bottom: 6px; }
+
+.empty { color: var(--muted); font-style: italic; }
+
+details summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary h2 { margin: 0; }
+details summary .chev { color: var(--muted); transition: transform 0.2s; }
+details[open] summary .chev { transform: rotate(90deg); }
+pre.logs {
+  margin: 14px 0 0;
+  max-height: 420px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  font: 12px/1.55 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+button {
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 0; border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+button:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+footer { margin-top: 22px; text-align: center; color: var(--muted); font-size: 13px; }
+footer .live { display: inline-flex; align-items: center; gap: 6px; }
+
+@media (max-width: 520px) {
+  .hero { padding: 20px; gap: 14px; }
+  .hero h1 { font-size: 24px; }
+  .hero .icon { width: 52px; height: 52px; border-radius: 14px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero" id="hero">
+    <div class="icon" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6.5" r="1"/></svg>
+    </div>
+    <div class="who">
+      <h1 id="name">Enceinte AirPlay</h1>
+      <div class="sub" id="subtitle">Connexion…</div>
+    </div>
+    <div class="pill" id="state"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="state-label">…</span></div>
+  </header>
+
+  <div class="alert" id="alert"></div>
+
+  <section class="grid">
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>Audio</h2>
+      <div id="audio"></div>
+    </article>
+
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M1.5 9a15 15 0 0 1 21 0"/><circle cx="12" cy="19.5" r="1"/></svg>Réseau</h2>
+      <div id="network"></div>
+    </article>
+
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></svg>Système</h2>
+      <div id="system"></div>
+    </article>
+
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Services</h2>
+      <div id="services"></div>
+    </article>
+
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stockage</h2>
+      <div id="storage"></div>
+    </article>
+
+    <article class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/></svg>Configuration</h2>
+      <div id="config"></div>
+    </article>
+
+    <article class="card wide">
+      <details id="logs-box">
+        <summary>
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>Journal système</h2>
+          <span class="chev" aria-hidden="true">›</span>
+        </summary>
+        <div style="margin-top:12px"><button type="button" id="logs-refresh">Actualiser</button></div>
+        <pre class="logs" id="logs"></pre>
+      </details>
+    </article>
+  </section>
+
+  <footer>
+    <span class="live"><span class="dot" id="live-dot"></span><span id="live-label">…</span></span>
+    · lecture seule
+  </footer>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d }));
+
+function duration(s) {
+  if (s == null) return "—";
+  s = Math.floor(s);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d) return `${d} j ${h} h`;
+  if (h) return `${h} h ${m} min`;
+  if (m) return `${m} min`;
+  return `${s} s`;
+}
+
+const row = (k, v, cls = "") => `<div class="row"><span class="k">${esc(k)}</span><span class="v ${cls}">${v}</span></div>`;
+
+function meter(label, value, pct, level = "") {
+  const w = Math.max(0, Math.min(100, pct ?? 0));
+  return `<div class="meter"><div class="top"><span>${esc(label)}</span><span>${value}</span></div>
+    <div class="bar ${level}"><div style="width:${w}%"></div></div></div>`;
+}
+
+function signalBars(dbm) {
+  const n = dbm == null ? 0 : dbm >= -55 ? 4 : dbm >= -65 ? 3 : dbm >= -75 ? 2 : 1;
+  return `<span class="signal" aria-hidden="true">${[1, 2, 3, 4].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
+}
+
+function band(mhz) {
+  if (!mhz) return "—";
+  if (mhz < 3000) return `2,4 GHz · canal ${Math.round((mhz - 2407) / 5)}`;
+  if (mhz < 5950) return `5 GHz · canal ${Math.round((mhz - 5000) / 5)}`;
+  return `${num(mhz)} MHz`;
+}
+
+const MODES = { stereo: "Stéréo", mono: "Mono (G+D)", left: "Gauche seul", right: "Droite seul", reverse: "Stéréo inversée" };
+
+function renderAudio(a) {
+  let h = "";
+  if (a.volume && a.volume.percent != null) {
+    const db = a.volume.db != null ? ` · ${num(a.volume.db, 1)} dB` : "";
+    h += meter(`Volume (${a.mixer})`, `${num(a.volume.percent)} %${db}`, a.volume.percent);
+  }
+  if (!a.cards.length) {
+    h += `<p class="empty">Aucune carte son détectée : vérifier la ligne dtoverlay de config.txt.</p>`;
+  }
+  for (const c of a.cards) h += row(`Carte ${c.index}`, esc(c.name || c.id));
+  h += row("Mixage", esc(MODES[a.mode] || a.mode));
+  h += row("Sortie", esc(a.output_device), "mono");
+  if (a.stream) {
+    const fmt = [a.stream.rate && `${num(a.stream.rate / 1000, 1)} kHz`, a.stream.format, a.stream.channels && `${a.stream.channels} canaux`].filter(Boolean).join(" · ");
+    h += row("Flux", esc(fmt || a.stream.state));
+  } else {
+    h += row("Flux", `<span class="tag">fermé</span>`);
+  }
+  $("audio").innerHTML = h;
+}
+
+function renderNetwork(list) {
+  if (!list.length) { $("network").innerHTML = `<p class="empty">Aucune interface.</p>`; return; }
+  $("network").innerHTML = list.map((i) => {
+    const up = i.state === "up" || i.ipv4.length > 0;
+    let h = `<div class="iface"><div class="iface-head"><span class="dot ${up ? "ok" : "bad"}"></span>${esc(i.name)}
+      <span class="tag ${up ? "ok" : "bad"}" style="margin-left:auto">${esc(i.state || "?")}</span></div>`;
+    h += row("Adresse IP", i.ipv4.length ? i.ipv4.map(esc).join("<br>") : "—", "mono");
+    if (i.wifi) {
+      if (i.wifi.connected) {
+        h += row("Réseau", esc(i.wifi.ssid));
+        h += row("Signal", `${signalBars(i.wifi.signal_dbm)}${num(i.wifi.signal_dbm)} dBm`);
+        h += row("Bande", esc(band(i.wifi.freq_mhz)));
+        if (i.wifi.tx_mbps) h += row("Débit", `${num(i.wifi.tx_mbps, 1)} Mbit/s`);
+      } else {
+        h += row("Wi-Fi", `<span class="tag bad">non connecté</span>`);
+      }
+    }
+    h += row("MAC", esc(i.mac), "mono");
+    return h + "</div>";
+  }).join("");
+}
+
+function renderSystem(s) {
+  const memUsed = s.mem_total_kb && s.mem_available_kb != null ? s.mem_total_kb - s.mem_available_kb : null;
+  const memPct = memUsed != null ? (memUsed / s.mem_total_kb) * 100 : null;
+  const temp = s.temp_c;
+  let h = `<div class="stats">
+      <div class="stat"><div class="l">Allumé depuis</div><div class="n">${duration(s.uptime_s)}</div></div>
+      <div class="stat"><div class="l">Charge</div><div class="n">${s.load.length ? num(s.load[0], 2) : "—"}</div></div>
+      <div class="stat"><div class="l">CPU</div><div class="n">${s.cpu_mhz ? (s.cpu_mhz >= 1000 ? num(s.cpu_mhz / 1000, 1) + " GHz" : num(s.cpu_mhz) + " MHz") : "—"}</div></div>
+    </div>`;
+  if (temp != null) h += meter("Température", `${num(temp, 1)} °C`, (temp / 85) * 100, temp >= 80 ? "bad" : temp >= 70 ? "warn" : "");
+  if (memPct != null) h += meter("Mémoire", `${num(memUsed / 1024)} / ${num(s.mem_total_kb / 1024)} Mo`, memPct, memPct > 90 ? "bad" : memPct > 75 ? "warn" : "");
+  if (s.undervoltage != null) {
+    h += row("Alimentation", s.undervoltage ? `<span class="tag bad">sous-tension</span>` : `<span class="tag ok">correcte</span>`);
+  }
+  h += row("Modèle", esc(s.model || "—"));
+  h += row("Noyau", esc(s.kernel || "—"), "mono");
+  $("system").innerHTML = h;
+}
+
+function renderServices(list) {
+  $("services").innerHTML = list
+    .filter((s) => s.running || s.essential)
+    .map((s) => {
+      const cls = s.running ? "ok" : s.essential ? "bad" : "";
+      const age = s.running ? `depuis ${duration(s.age_s)}` : "arrêté";
+      return `<div class="svc"><span class="dot ${cls}"></span><span class="name">${esc(s.label)}</span><span class="age">${esc(age)}</span></div>`;
+    })
+    .join("");
+}
+
+function renderStorage(st) {
+  const mount = (label, m, expect) => {
+    if (!m) return row(label, "non monté");
+    const ok = m.ro && (!expect || m.fs === expect);
+    return row(label, `<span class="mono">${esc(m.fs)}</span> <span class="tag ${ok ? "ok" : "bad"}">${m.ro ? "lecture seule" : "écriture"}</span>`);
+  };
+  let h = mount("Système /", st.root, "squashfs") + mount("Partition boot", st.boot, "vfat");
+  if (st.sd) {
+    h += row("Écritures carte SD", st.sd.writes === 0 ? `<span class="tag ok">aucune</span>` : `<span class="tag bad">${num(st.sd.writes)} (${num(st.sd.sectors_written / 2)} Ko)</span>`);
+  }
+  $("storage").innerHTML = h;
+}
+
+function renderConfig(cfg, boot) {
+  let h = cfg.length ? cfg.map(([k, v]) => row(k, v === "" ? `<span class="empty">vide</span>` : esc(v), "mono")).join("") : `<p class="empty">/run/airplay.env absent.</p>`;
+  if (boot.length) {
+    h += `<div class="row"><span class="k">config.txt</span><span class="v mono">${boot.map((b) => esc((b.section !== "all" ? `[${b.section}] ` : "") + b.line)).join("<br>")}</span></div>`;
+  }
+  $("config").innerHTML = h;
+}
+
+function setAlert(msg) {
+  $("alert").textContent = msg || "";
+  $("alert").classList.toggle("show", !!msg);
+}
+
+let failures = 0;
+async function refresh() {
+  try {
+    const r = await fetch("/api/status", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json();
+    failures = 0;
+
+    const name = s.name || s.hostname || "Enceinte AirPlay";
+    document.title = `${name} · AirPlay`;
+    $("name").textContent = name;
+    $("subtitle").textContent = [s.hostname && `${s.hostname}.local`, s.system.model].filter(Boolean).join(" · ");
+    $("hero").classList.toggle("playing", s.audio.playing);
+    $("state-label").textContent = s.audio.playing ? "En lecture" : "En attente";
+
+    renderAudio(s.audio);
+    renderNetwork(s.network);
+    renderSystem(s.system);
+    renderServices(s.services);
+    renderStorage(s.storage);
+    renderConfig(s.config, s.boot_config);
+
+    const problems = [];
+    if (s.system.undervoltage) problems.push("Sous-tension détectée : alimentation insuffisante (risque de craquements et de plantages).");
+    const down = s.services.filter((x) => x.essential && !x.running).map((x) => x.label);
+    if (down.length) problems.push(`Service arrêté : ${down.join(", ")}.`);
+    if (!s.audio.cards.length) problems.push("Aucune carte son détectée.");
+    setAlert(problems.join(" "));
+
+    $("live-dot").className = "dot ok";
+    $("live-label").textContent = `Mis à jour à ${new Date().toLocaleTimeString("fr-FR")}`;
+  } catch (e) {
+    failures++;
+    $("live-dot").className = "dot bad";
+    $("live-label").textContent = "Enceinte injoignable";
+    if (failures > 1) setAlert("Connexion perdue avec l'enceinte. Nouvel essai en cours…");
+  }
+}
+
+async function loadLogs() {
+  try {
+    const r = await fetch("/api/logs", { cache: "no-store" });
+    const text = await r.text();
+    const pre = $("logs");
+    pre.textContent = text || "Journal vide.";
+    pre.scrollTop = pre.scrollHeight;
+  } catch (e) {
+    $("logs").textContent = "Impossible de lire le journal.";
+  }
+}
+$("logs-box").addEventListener("toggle", (e) => { if (e.target.open) loadLogs(); });
+$("logs-refresh").addEventListener("click", loadLogs);
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

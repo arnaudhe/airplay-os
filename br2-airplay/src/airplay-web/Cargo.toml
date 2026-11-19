@@ -1,0 +1,18 @@
+[package]
+name = "airplay-web"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+description = "Interface web en lecture seule : état d'une enceinte AirPlay 2"
+license = "MIT"
+publish = false
+
+# Aucune dépendance externe : le paquet Buildroot compile hors ligne
+# (cargo --offline --locked) sans rien à télécharger.
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

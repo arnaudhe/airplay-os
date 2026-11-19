@@ -84,6 +84,8 @@ BR2_PACKAGE_WPA_SUPPLICANT_NL80211=y
 BR2_PACKAGE_WPA_SUPPLICANT_PASSPHRASE=y
 BR2_PACKAGE_IW=y
 BR2_PACKAGE_WIRELESS_REGDB=y
+# Interface web en lecture seule (BR2_EXTERNAL, Rust)
+BR2_PACKAGE_AIRPLAY_WEB=y
 # seedrng voudrait écrire dans /var/lib : inutile en lecture seule
 # BR2_PACKAGE_URANDOM_SCRIPTS is not set
 
